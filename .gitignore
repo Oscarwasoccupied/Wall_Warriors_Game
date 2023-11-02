@@ -36,7 +36,7 @@
 *.o
 *.zip
 *.txt
-
+*.json
 # Ignore specific files listed
 1_Windows_test_ps4-1.cpp
 2_audio_test_individual_proj.cpp
