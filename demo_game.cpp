@@ -1,17 +1,24 @@
+#include "ysglfontdata.h"
 #include "fssimplewindow.h"
 #include <vector>
 #include <cmath>
 #include <cstdlib> // for rand and srand
 #include <ctime> // for time
 
+const int WINDOW_WIDTH = 800;
+const int WINDOW_HEIGHT = 600;
 
 const int SOLDIER_SIZE = 30;
 const int ENEMY_RADIUS = 12;
+
 
 const int MOVE_STEP = 5; // Define the left/right moving step of the soldier
 const int BULLET_RADIUS = 5; // Define the size of the bullet
 const int BULLET_SPEED = 10; // Define the speed of the bullet
 const int SHOOTING_FREQUENCY = 900; // Frequency of bullet shooting in milliseconds
+
+const int MAX_ENEMIES = 20; // Maximum number of enemies that can be generated
+const int WALL_GAP = WINDOW_HEIGHT - WINDOW_HEIGHT / 3; // Distance between sets of walls
 
 class Bullet {
 public:
@@ -57,7 +64,7 @@ public:
         if (newX >= 0 && newX <= windowWidth - size) { // Check if the new x coordinate is within the window
             x = newX; // Update the x coordinate
         }
-        y -= 1; // Move the soldier upwards
+        // Remove the line that moves the soldier upwards
     }
 
     std::vector<Bullet> shoot(int numBullets) {
@@ -72,10 +79,12 @@ public:
 
 class Enemy {
 public:
-    int x, y, radius;
+    double x, y;
+    int radius;
     bool isMoving;
+    double speed;
 
-    Enemy(int x, int y, int radius) : x(x), y(y), radius(radius), isMoving(false) {}
+    Enemy(double x, double y, int radius, double speed) : x(x), y(y), radius(radius), isMoving(false), speed(speed) {}
 
     void draw() {
         glBegin(GL_POLYGON);
@@ -88,15 +97,15 @@ public:
         glEnd();
     }
 
-    void move(int soldierX, int soldierY) {
+    void move(double soldierX, double soldierY) {
         if (isMoving) {
             if (x < soldierX) {
-                x += 1;
+                x += speed; // Increase the moving speed of the enemy
             } else if (x > soldierX) {
-                x -= 1;
+                x -= speed; // Increase the moving speed of the enemy
             }
         }
-        y += 1; // Always move the enemy downwards
+        y += speed; // Always move the enemy downwards faster than the wall
     }
 };
 
@@ -113,6 +122,18 @@ public:
         glVertex2i(x1, y1);
         glVertex2i(x2, y2);
         glEnd();
+
+        // Draw operation text
+        char operationText[10];
+        switch(operation) {
+            case 0: strcpy(operationText, "+2"); break;
+            case 1: strcpy(operationText, "-2"); break;
+            case 2: strcpy(operationText, "x2"); break;
+            case 3: strcpy(operationText, "/2"); break;
+        }
+        glColor3ub(0, 0, 0); // Set color to black
+        glRasterPos2i((x1 + x2) / 2, y1 + 20); // Position the text below the wall
+        YsGlDrawFontBitmap16x20(operationText); // Draw the text
     }
 
     int performOperation(int numSoldiers) {
@@ -131,26 +152,38 @@ public:
     }
 };
 
+// This function generates a set of walls and enemies for the game.
+// The function first generates two walls with random operations and adds them to the vector of walls.
+// Then, it generates a random number of enemies (up to MAX_ENEMIES) with random x and y coordinates and adds them to the vector of enemies.
+void generateSet(std::vector<Wall>& walls, std::vector<Enemy>& enemies, int y) {
+    int operation = rand() % 4; // Random operation (0, 1, 2, or 3)
+    walls.push_back(Wall(110, y, 390, y, operation)); // Wall with random operation
+
+    operation = rand() % 4; // Random operation (0, 1, 2, or 3)
+    walls.push_back(Wall(410, y, 690, y, operation)); // Wall with random operation
+
+    int numEnemies = rand() % MAX_ENEMIES + 1; // Random number of enemies up to MAX_ENEMIES
+    for (int i = 0; i < numEnemies; i++) {
+        int enemyX = rand() % (700 - 100 - 2 * ENEMY_RADIUS) + 100 + ENEMY_RADIUS; // Random x coordinate between the road
+        int enemyY = y - rand() % (WALL_GAP - 2 * ENEMY_RADIUS) - ENEMY_RADIUS; // Random y coordinate between the wall and halfway to the next wall
+        double enemySpeed = 1; // Set the speed of the enemy
+        enemies.push_back(Enemy(enemyX, enemyY, ENEMY_RADIUS, enemySpeed));
+    }
+}
+
 int main() {
     srand(time(0)); // Seed the random number generator
-    int windowWidth = 800;
-    int windowHeight = 600;
+    int windowWidth = WINDOW_WIDTH;
+    int windowHeight = WINDOW_HEIGHT;
+
     FsOpenWindow(0, 0, windowWidth, windowHeight, 1);
 
     std::vector<Soldier> soldiers;
     soldiers.push_back(Soldier(windowWidth / 2, windowHeight - SOLDIER_SIZE, SOLDIER_SIZE));
     
-    std::vector<Enemy> enemies;
-    int numEnemies = rand() % 5 + 1; // Random number of enemies up to 5
-    for (int i = 0; i < numEnemies; i++) {
-        int enemyX = rand() % (700 - 100 - 2 * ENEMY_RADIUS) + 100 + ENEMY_RADIUS; // Random x coordinate between the road
-        int enemyY = rand() % (200 - 2 * ENEMY_RADIUS) + ENEMY_RADIUS; // Random y coordinate between the top of the window and halfway to the wall
-        enemies.push_back(Enemy(enemyX, enemyY, ENEMY_RADIUS));
-    }
-
     std::vector<Wall> walls;
-    walls.push_back(Wall(100, 400, 390, 400, 0)); // Wall with operation 0 (add)
-    walls.push_back(Wall(410, 400, 700, 400, 1)); // Wall with operation 1 (subtract)
+    std::vector<Enemy> enemies;
+    generateSet(walls, enemies, 400);
 
     std::vector<Bullet> bullets;
     int lastShotTime = FsSubSecondTimer();
@@ -177,8 +210,9 @@ int main() {
 
         // Create bullets every SHOOTING_FREQUENCY milliseconds
         if (FsSubSecondTimer() - lastShotTime >= SHOOTING_FREQUENCY) {
+            int bulletsPerSoldier = 1; // Each soldier shoots one bullet
             for(auto& soldier : soldiers) {
-                auto newBullets = soldier.shoot(soldiers.size());
+                auto newBullets = soldier.shoot(bulletsPerSoldier);
                 bullets.insert(bullets.end(), newBullets.begin(), newBullets.end());
             }
             lastShotTime = FsSubSecondTimer();
@@ -252,12 +286,12 @@ int main() {
         }
 
         // Check if soldier passed a wall
-            for(auto& wall : walls) {
-                if(!wall.isPassed && soldiers.size() > 0 && soldiers[0].y <= wall.y1 && soldiers[0].x >= wall.x1 && soldiers[0].x <= wall.x2) {
-                    wall.isPassed = true; // set the flag to true
-                    for(auto& enemy : enemies) {
-                        enemy.isMoving = true; // set the flag to true
-                    }
+        for(auto& wall : walls) {
+            if(!wall.isPassed && soldiers.size() > 0 && soldiers[0].y <= wall.y1 && soldiers[0].x >= wall.x1 && soldiers[0].x <= wall.x2) {
+                wall.isPassed = true; // set the flag to true
+                for(auto& enemy : enemies) {
+                    enemy.isMoving = true; // set the flag to true
+                }
                 int numSoldiers = soldiers.size();
                 numSoldiers = wall.performOperation(numSoldiers);
                 while(soldiers.size() < numSoldiers) {
@@ -267,7 +301,13 @@ int main() {
                 while(soldiers.size() > numSoldiers && soldiers.size() > 1) {
                     soldiers.pop_back(); // remove soldiers from the end
                 }
+                break; // Exit the loop after applying the wall's effect
             }
+        }
+
+        // Check if a wall has moved past the end of the window
+        if (walls.back().y1 > WALL_GAP) {
+            generateSet(walls, enemies, 0);
         }
 
         // Remove enemies that have moved past the end of the window
@@ -288,10 +328,28 @@ int main() {
             }
         }
 
+        
+        // Remove enemies that have moved past the end of the window
+        for (auto it = enemies.begin(); it != enemies.end(); ) {
+            if (it->y > windowHeight) {
+                it = enemies.erase(it);
+            } else {
+                ++it;
+            }
+        }
+
+        // Remove walls that have moved past the end of the window
+        for (auto it = walls.begin(); it != walls.end(); ) {
+            if (it->y1 > windowHeight) {
+                it = walls.erase(it);
+            } else {
+                ++it;
+            }
+        }
+        
         FsSwapBuffers();
         FsSleep(25);
     }
-
 
     return 0;
 }
