@@ -6,8 +6,9 @@ const int SOLDIER_SIZE = 30;
 const int ENEMY_RADIUS = 20;
 
 const int MOVE_STEP = 5; // Define the left/right moving step of the soldier
-const int BULLET_RADIUS = 5;
-const int BULLET_SPEED = 10;
+const int BULLET_RADIUS = 5; // Define the size of the bullet
+const int BULLET_SPEED = 10; // Define the speed of the bullet
+const int SHOOTING_FREQUENCY = 900; // Frequency of bullet shooting in milliseconds
 
 class Bullet {
 public:
@@ -19,9 +20,9 @@ public:
     void draw() {
         glBegin(GL_POLYGON);
         for(int i = 0; i < 360; i++) {
-            double angle = i * 3.14159 / 180;
-            double fx = x + cos(angle) * radius;
-            double fy = y + sin(angle) * radius;
+            double angle = i * 3.14159 / 180; // Convert degrees to radians
+            double fx = x + cos(angle) * radius; // Calculate the x coordinate
+            double fy = y + sin(angle) * radius; // Calculate the y coordinate
             glVertex2d(fx, fy);
         }
         glEnd();
@@ -165,8 +166,8 @@ int main() {
             break;  // Exit the game
         }
 
-        // Create bullets every 3 seconds
-        if (FsSubSecondTimer() - lastShotTime >= 1000) {
+        // Create bullets every SHOOTING_FREQUENCY milliseconds
+        if (FsSubSecondTimer() - lastShotTime >= SHOOTING_FREQUENCY) {
             for(auto& soldier : soldiers) {
                 auto newBullets = soldier.shoot(soldiers.size());
                 bullets.insert(bullets.end(), newBullets.begin(), newBullets.end());
