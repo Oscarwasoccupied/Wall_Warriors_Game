@@ -67,14 +67,26 @@ public:
         // Remove the line that moves the soldier upwards
     }
 
+    // Shooting Method 1: Shoot bullets straight up only
+    // std::vector<Bullet> shoot(int numBullets) {
+    //     std::vector<Bullet> bullets;
+    //     for(int i = 0; i < numBullets; i++) {
+    //         double angle = (180.0 / (numBullets + 1) * (i + 1)) * 3.14159 / 180;
+    //         bullets.push_back(Bullet(x, y, BULLET_RADIUS, angle));
+    //     }
+    //     return bullets;
+    // }
+
+    // Shoting Method 2: Shoot bullets at different angles
     std::vector<Bullet> shoot(int numBullets) {
         std::vector<Bullet> bullets;
         for(int i = 0; i < numBullets; i++) {
             double angle = (180.0 / (numBullets + 1) * (i + 1)) * 3.14159 / 180;
-            bullets.push_back(Bullet(x, y, BULLET_RADIUS, angle));
+            bullets.push_back(Bullet(x + size / 2, y, BULLET_RADIUS, angle));
         }
         return bullets;
     }
+
 };
 
 class Enemy {
@@ -212,12 +224,23 @@ int main() {
         }
 
         // Create bullets every SHOOTING_FREQUENCY milliseconds
+        // Shooting Method 1: Shoot bullets straight up only
+        // if (FsSubSecondTimer() - lastShotTime >= SHOOTING_FREQUENCY) {
+        //     int bulletsPerSoldier = 1; // Each soldier shoots one bullet
+        //     for(auto& soldier : soldiers) {
+        //         auto newBullets = soldier.shoot(bulletsPerSoldier);
+        //         bullets.insert(bullets.end(), newBullets.begin(), newBullets.end());
+        //     }
+        //     lastShotTime = FsSubSecondTimer();
+        // }
+
+        
+        // Create bullets every SHOOTING_FREQUENCY milliseconds
+        // Shoting Method 2: Shoot bullets at different angles 
         if (FsSubSecondTimer() - lastShotTime >= SHOOTING_FREQUENCY) {
-            int bulletsPerSoldier = 1; // Each soldier shoots one bullet
-            for(auto& soldier : soldiers) {
-                auto newBullets = soldier.shoot(bulletsPerSoldier);
-                bullets.insert(bullets.end(), newBullets.begin(), newBullets.end());
-            }
+            int bulletsPerSoldier = soldiers.size(); // The number of bullets is equal to the number of soldiers
+            auto newBullets = soldiers[0].shoot(bulletsPerSoldier); // Shoot bullets from the first soldier
+            bullets.insert(bullets.end(), newBullets.begin(), newBullets.end());
             lastShotTime = FsSubSecondTimer();
         }
 
