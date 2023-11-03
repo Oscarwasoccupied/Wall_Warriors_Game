@@ -20,13 +20,18 @@ const int SHOOTING_FREQUENCY = 900; // Frequency of bullet shooting in milliseco
 const int MAX_ENEMIES = 20; // Maximum number of enemies that can be generated
 const int WALL_GAP = WINDOW_HEIGHT - WINDOW_HEIGHT / 3; // Distance between sets of walls
 
+// Class representing a bullet in the game
+// Each bullet has a position (x, y), a radius, and an angle
+// The bullet can be drawn and moved
 class Bullet {
 public:
-    int x, y, radius;
-    double angle;
+    int x, y, radius; // Position and size of the bullet
+    double angle; // Direction of the bullet
 
+    // Constructor for the Bullet class
     Bullet(int x, int y, int radius, double angle) : x(x), y(y), radius(radius), angle(angle) {}
 
+    // Method to draw the bullet on the screen
     void draw() {
         glBegin(GL_POLYGON);
         for(int i = 0; i < 360; i++) {
@@ -38,18 +43,24 @@ public:
         glEnd();
     }
 
+    // Method to move the bullet according to its angle
     void move() {
         y -= BULLET_SPEED * sin(angle);
         x += BULLET_SPEED * cos(angle);
     }
 };
 
+// Class representing a soldier in the game
+// Each soldier has a position (x, y) and a size
+// The soldier can be drawn, moved, and can shoot bullets
 class Soldier {
 public:
-    int x, y, size;
+    int x, y, size; // Position and size of the soldier
 
+    // Constructor for the Soldier class
     Soldier(int x, int y, int size) : x(x), y(y), size(size) {}
 
+    // Method to draw the soldier on the screen
     void draw() {
         glBegin(GL_QUADS);
         glVertex2i(x, y);
@@ -59,25 +70,15 @@ public:
         glEnd();
     }
 
+    // Method to move the soldier left or right within the window
     void move(int dx, int windowWidth) {
         int newX = x + dx * MOVE_STEP; // Calculate the new x coordinate
         if (newX >= 0 && newX <= windowWidth - size) { // Check if the new x coordinate is within the window
             x = newX; // Update the x coordinate
         }
-        // Remove the line that moves the soldier upwards
     }
 
-    // Shooting Method 1: Shoot bullets straight up only
-    // std::vector<Bullet> shoot(int numBullets) {
-    //     std::vector<Bullet> bullets;
-    //     for(int i = 0; i < numBullets; i++) {
-    //         double angle = (180.0 / (numBullets + 1) * (i + 1)) * 3.14159 / 180;
-    //         bullets.push_back(Bullet(x, y, BULLET_RADIUS, angle));
-    //     }
-    //     return bullets;
-    // }
-
-    // Shoting Method 2: Shoot bullets at different angles
+    // Method to shoot bullets at different angles
     std::vector<Bullet> shoot(int numBullets) {
         std::vector<Bullet> bullets;
         for(int i = 0; i < numBullets; i++) {
@@ -89,16 +90,22 @@ public:
 
 };
 
+// Class representing an enemy in the game
+// Each enemy has a position (x, y), a radius, a speed, and a wallId
+// The enemy can be drawn and moved
+// The enemy moves downwards and towards the soldier if it has passed the wall with the same wallId
 class Enemy {
 public:
     double x, y;
     int radius;
     bool isMoving;
     double speed;
-    int wallId; // Add this line
+    int wallId; // The id of the wall that the enemy is associated with
 
+    // Constructor for the Enemy class
     Enemy(double x, double y, int radius, double speed, int wallId) : x(x), y(y), radius(radius), isMoving(false), speed(speed), wallId(wallId) {}
 
+    // Method to draw the enemy on the screen
     void draw() {
         glBegin(GL_POLYGON);
         for(int i = 0; i < 360; i++) {
@@ -110,6 +117,9 @@ public:
         glEnd();
     }
 
+    // Method to move the enemy
+    // The enemy always moves downwards
+    // If the enemy has passed the wall with the same wallId, it moves towards the soldier
     void move(double soldierX, double soldierY, int passedWallId) {
         y += speed; // Always move the enemy downwards
         if (wallId <= passedWallId) {
@@ -122,6 +132,9 @@ public:
     }
 };
 
+// Class representing a wall in the game
+// Each wall has two points (x1, y1) and (x2, y2), an operation, a flag to track if a soldier has passed through the wall, and a wallId
+// The wall can be drawn, moved, and perform an operation on the number of soldiers
 class Wall {
 public:
     int x1, y1, x2, y2;
@@ -129,8 +142,10 @@ public:
     bool isPassed; // flag to track if a soldier has passed through the wall
     int wallId; // Add this line
 
+    // Constructor for the Wall class
     Wall(int x1, int y1, int x2, int y2, int operation, int wallId) : x1(x1), y1(y1), x2(x2), y2(y2), operation(operation), isPassed(false), wallId(wallId) {}
 
+    // Method to draw the wall on the screen
     void draw() {
         glBegin(GL_LINES);
         glVertex2i(x1, y1);
@@ -150,6 +165,7 @@ public:
         YsGlDrawFontBitmap16x20(operationText); // Draw the text
     }
 
+    // Method to perform the operation on the number of soldiers
     int performOperation(int numSoldiers) {
         switch(operation) {
             case 0: return numSoldiers + 2; // add 2 soldiers
@@ -160,6 +176,7 @@ public:
         }
     }
 
+    // Method to move the wall
     void move() {
         y1 += 1; // Move the wall downwards
         y2 += 1;
@@ -280,74 +297,101 @@ int main() {
         for (auto it = soldiers.begin(); it != soldiers.end(); ) {
             bool isHit = false;
             for (auto& enemy : enemies) {
+                // Check if the distance between the soldier and the enemy is less than the sum of their sizes (collision detection)
                 if (abs(it->x - enemy.x) < it->size && abs(it->y - enemy.y) < enemy.radius) {
+                    // If a collision is detected, set the hit flag to true and break the loop
                     isHit = true;
                     break;
                 }
-                
             }
+            // If a collision is detected, remove the soldier
             if (isHit) {
                 it = soldiers.erase(it);
-            } else {
+            } 
+            // If no collision is detected, move to the next soldier
+            else {
                 ++it;
             }
         }
 
         // Check for collisions between bullets and enemies
         for (auto it = bullets.begin(); it != bullets.end(); ) {
+            // Initialize a flag to check if a bullet hits an enemy
             bool isHit = false;
+            // Iterate over all enemies
             for (auto jt = enemies.begin(); jt != enemies.end(); ) {
+                // Check if the distance between the bullet and the enemy is less than the sum of their radii (collision detection)
                 if (abs(it->x - jt->x) < it->radius + jt->radius && abs(it->y - jt->y) < it->radius + jt->radius) {
+                    // If a collision is detected, set the hit flag to true and remove the enemy
                     isHit = true;
                     jt = enemies.erase(jt);
                 } else {
+                    // If no collision is detected, move to the next enemy
                     ++jt;
                 }
             }
+            // If a collision is detected, remove the bullet
             if (isHit) {
                 it = bullets.erase(it);
             } else {
+                // If no collision is detected, move to the next bullet
                 ++it;
             }
         }
 
         // Check for collisions between bullets and walls
         for (auto it = bullets.begin(); it != bullets.end(); ) {
+            // Initialize a flag to check if a bullet hits a wall
             bool isHit = false;
+            // Iterate over all walls
             for (auto& wall : walls) {
+                // Check if the bullet is within the boundaries of the wall (collision detection)
                 if (it->y <= wall.y1 && it->x >= wall.x1 && it->x <= wall.x2) {
+                    // If a collision is detected, set the hit flag to true and break the loop
                     isHit = true;
                     break;
                 }
             }
+            // If a collision is detected, remove the bullet
             if (isHit) {
-                it = bullets.erase(it); // Remove the bullet if it hits a wall
-            } else {
+                it = bullets.erase(it);
+            } 
+            // If no collision is detected, move to the next bullet
+            else {
                 ++it;
             }
         }
-       // Check if soldier passed a wall
-        for(auto& wall : walls) {
-            if(!wall.isPassed && soldiers.size() > 0 && soldiers[0].y <= wall.y1 && soldiers[0].x >= wall.x1 && soldiers[0].x <= wall.x2) {
-                wall.isPassed = true; // set the flag to true
-                lastPassedWallId = wall.wallId; // update the last passed wall's ID
 
+        // Check if soldier passed a wall
+        for(auto& wall : walls) {
+            // Check if the soldier has passed a wall and perform the wall's operation
+            if(!wall.isPassed && soldiers.size() > 0 && soldiers[0].y <= wall.y1 && soldiers[0].x >= wall.x1 && soldiers[0].x <= wall.x2) {
+                wall.isPassed = true; // Mark the wall as passed
+                lastPassedWallId = wall.wallId; // Update the ID of the last passed wall
+
+                // Set the enemies associated with the passed wall to start moving
                 for(auto& enemy : enemies) {
                     if (enemy.wallId == wall.wallId) {
-                        enemy.isMoving = true; // set the flag to true for the enemies after the passed wall
+                        enemy.isMoving = true;
                     }
                 }
 
-                int numSoldiers = soldiers.size();
-                numSoldiers = wall.performOperation(numSoldiers);
+                // Perform the wall's operation on the number of soldiers
+                int numSoldiers = wall.performOperation(soldiers.size());
+
+                // Add new soldiers if the number of soldiers increased
                 while(soldiers.size() < numSoldiers) {
                     int startX = soldiers[0].x + (soldiers.size() % 2 == 0 ? -SOLDIER_SIZE - 1 : SOLDIER_SIZE + 1) * ((soldiers.size() + 1) / 2);
-                    soldiers.push_back(Soldier(startX, soldiers[0].y, SOLDIER_SIZE)); // add new soldiers at the same y position as the existing soldier
+                    soldiers.push_back(Soldier(startX, soldiers[0].y, SOLDIER_SIZE));
                 }
+
+                // Remove soldiers if the number of soldiers decreased
                 while(soldiers.size() > numSoldiers && soldiers.size() > 1) {
-                    soldiers.pop_back(); // remove soldiers from the end
+                    soldiers.pop_back();
                 }
-                break; // Exit the loop after applying the wall's effect
+
+                // Exit the loop after applying the wall's effect
+                break;
             }
         }
 
