@@ -6,7 +6,7 @@
 
 
 const int SOLDIER_SIZE = 30;
-const int ENEMY_RADIUS = 20;
+const int ENEMY_RADIUS = 12;
 
 const int MOVE_STEP = 5; // Define the left/right moving step of the soldier
 const int BULLET_RADIUS = 5; // Define the size of the bullet
@@ -89,18 +89,12 @@ public:
     }
 
     void move(int soldierX, int soldierY) {
-        if (isMoving) {
-            if (x < soldierX) {
-                x += 1;
-            } else if (x > soldierX) {
-                x -= 1;
-            }
-            if (y < soldierY) {
-                y += 1;
-            } else if (y > soldierY) {
-                y -= 1;
-            }
+        if (x < soldierX) {
+            x += 1;
+        } else if (x > soldierX) {
+            x -= 1;
         }
+        y += 1; // Always move the enemy downwards
     }
 };
 
@@ -128,6 +122,11 @@ public:
             default: return numSoldiers;
         }
     }
+
+    void move() {
+        y1 += 1; // Move the wall downwards
+        y2 += 1;
+    }
 };
 
 int main() {
@@ -140,7 +139,7 @@ int main() {
     
     std::vector<Enemy> enemies;
     int enemyX = rand() % (700 - 100 - 2 * ENEMY_RADIUS) + 100 + ENEMY_RADIUS; // Random x coordinate between the road
-    int enemyY = rand() % (400 - 2 * ENEMY_RADIUS) + ENEMY_RADIUS; // Random y coordinate between the top of the window and the wall
+    int enemyY = rand() % (200 - 2 * ENEMY_RADIUS) + ENEMY_RADIUS; // Random y coordinate between the top of the window and halfway to the wall
     enemies.push_back(Enemy(enemyX, enemyY, ENEMY_RADIUS));
 
     std::vector<Wall> walls;
@@ -205,6 +204,12 @@ int main() {
             }
         }
 
+        // Draw and move walls
+        for(auto& wall : walls) {
+            wall.draw();
+            wall.move();
+        }
+
         // Check for collisions between soldiers and enemies
         for (auto it = soldiers.begin(); it != soldiers.end(); ) {
             bool isHit = false;
@@ -240,14 +245,9 @@ int main() {
             }
         }
 
-        // Draw walls
-        for(auto& wall : walls) {
-            wall.draw();
-        }
-
         // Check if soldier passed a wall
         for(auto& wall : walls) {
-            if(!wall.isPassed && soldiers.size() > 0 && soldiers[0].y < wall.y1 && soldiers[0].x >= wall.x1 && soldiers[0].x <= wall.x2) {
+            if(!wall.isPassed && soldiers.size() > 0 && soldiers[0].y <= wall.y1 && soldiers[0].x >= wall.x1 && soldiers[0].x <= wall.x2) {
                 wall.isPassed = true; // set the flag to true
                 for(auto& enemy : enemies) {
                     enemy.isMoving = true;
@@ -261,6 +261,24 @@ int main() {
                 while(soldiers.size() > numSoldiers && soldiers.size() > 1) {
                     soldiers.pop_back(); // remove soldiers from the end
                 }
+            }
+        }
+
+        // Remove enemies that have moved past the end of the window
+        for (auto it = enemies.begin(); it != enemies.end(); ) {
+            if (it->y > windowHeight) {
+                it = enemies.erase(it);
+            } else {
+                ++it;
+            }
+        }
+
+        // Remove walls that have moved past the end of the window
+        for (auto it = walls.begin(); it != walls.end(); ) {
+            if (it->y1 > windowHeight) {
+                it = walls.erase(it);
+            } else {
+                ++it;
             }
         }
 
