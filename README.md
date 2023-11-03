@@ -1,9 +1,8 @@
 # Wall Warriors Game
 **Game Description**
-
 The game is a simple 2D shooter where the player controls a group of soldiers moving forward on a road, fighting against enemies and overcoming walls with special properties.
-Gameplay
 
+**Gameplay**
 The game gives the illusion of the soldiers moving forward by having the road, enemies, and walls automatically move downwards. The soldiers can move left or right on the road, but they stay at the same vertical position. This creates the effect of the soldiers advancing, while in reality, the environment (road, enemies, and walls) is moving towards them. The soldiers can shoot bullets upwards at a frequency that can be set at the beginning of the game.
 
 Enemies appear at random positions in the upper half of the road and chase the soldiers. If an enemy collides with a soldier, the soldier is removed from the game.
