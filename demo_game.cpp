@@ -83,8 +83,9 @@ public:
     int radius;
     bool isMoving;
     double speed;
+    int wallId; // Add this line
 
-    Enemy(double x, double y, int radius, double speed) : x(x), y(y), radius(radius), isMoving(false), speed(speed) {}
+    Enemy(double x, double y, int radius, double speed, int wallId) : x(x), y(y), radius(radius), isMoving(false), speed(speed), wallId(wallId) {}
 
     void draw() {
         glBegin(GL_POLYGON);
@@ -97,15 +98,15 @@ public:
         glEnd();
     }
 
-    void move(double soldierX, double soldierY) {
-        if (isMoving) {
+    void move(double soldierX, double soldierY, int passedWallId) {
+        y += speed; // Always move the enemy downwards
+        if (wallId <= passedWallId) {
             if (x < soldierX) {
-                x += speed; // Increase the moving speed of the enemy
+                x += speed; // Move the enemy to the right
             } else if (x > soldierX) {
-                x -= speed; // Increase the moving speed of the enemy
+                x -= speed; // Move the enemy to the left
             }
         }
-        y += speed; // Always move the enemy downwards faster than the wall
     }
 };
 
@@ -114,8 +115,9 @@ public:
     int x1, y1, x2, y2;
     int operation; // 0: add, 1: subtract, 2: multiply, 3: divide
     bool isPassed; // flag to track if a soldier has passed through the wall
+    int wallId; // Add this line
 
-    Wall(int x1, int y1, int x2, int y2, int operation) : x1(x1), y1(y1), x2(x2), y2(y2), operation(operation), isPassed(false) {}
+    Wall(int x1, int y1, int x2, int y2, int operation, int wallId) : x1(x1), y1(y1), x2(x2), y2(y2), operation(operation), isPassed(false), wallId(wallId) {}
 
     void draw() {
         glBegin(GL_LINES);
@@ -155,19 +157,19 @@ public:
 // This function generates a set of walls and enemies for the game.
 // The function first generates two walls with random operations and adds them to the vector of walls.
 // Then, it generates a random number of enemies (up to MAX_ENEMIES) with random x and y coordinates and adds them to the vector of enemies.
-void generateSet(std::vector<Wall>& walls, std::vector<Enemy>& enemies, int y) {
+void generateSet(std::vector<Wall>& walls, std::vector<Enemy>& enemies, int y, int setId) {
     int operation = rand() % 4; // Random operation (0, 1, 2, or 3)
-    walls.push_back(Wall(110, y, 390, y, operation)); // Wall with random operation
+    walls.push_back(Wall(110, y, 390, y, operation, setId)); // Wall with random operation
 
     operation = rand() % 4; // Random operation (0, 1, 2, or 3)
-    walls.push_back(Wall(410, y, 690, y, operation)); // Wall with random operation
+    walls.push_back(Wall(410, y, 690, y, operation, setId)); // Wall with random operation
 
     int numEnemies = rand() % MAX_ENEMIES + 1; // Random number of enemies up to MAX_ENEMIES
     for (int i = 0; i < numEnemies; i++) {
         int enemyX = rand() % (700 - 100 - 2 * ENEMY_RADIUS) + 100 + ENEMY_RADIUS; // Random x coordinate between the road
-        int enemyY = y - rand() % (WALL_GAP - 2 * ENEMY_RADIUS) - ENEMY_RADIUS; // Random y coordinate between the wall and halfway to the next wall
+        int enemyY = y - WALL_GAP/3 - rand() % (2*WALL_GAP/3 - 2 * ENEMY_RADIUS) - ENEMY_RADIUS; // Random y coordinate between the wall and two thirds to the next wall
         double enemySpeed = 1; // Set the speed of the enemy
-        enemies.push_back(Enemy(enemyX, enemyY, ENEMY_RADIUS, enemySpeed));
+        enemies.push_back(Enemy(enemyX, enemyY, ENEMY_RADIUS, enemySpeed, setId)); // Set the wallId field to the setId
     }
 }
 
@@ -183,12 +185,13 @@ int main() {
     
     std::vector<Wall> walls;
     std::vector<Enemy> enemies;
-    generateSet(walls, enemies, 400);
+    int setId = 0;
+    generateSet(walls, enemies, 400, setId++);
 
     std::vector<Bullet> bullets;
     int lastShotTime = FsSubSecondTimer();
 
-    // In the main loop
+    int lastPassedWallId = -1;
     while(FsInkey() != FSKEY_ESC) {
         glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
@@ -240,7 +243,7 @@ int main() {
         for(auto& enemy : enemies) {
             enemy.draw();
             if (soldiers.size() > 0) {
-                enemy.move(soldiers[0].x, soldiers[0].y);
+                enemy.move(soldiers[0].x, soldiers[0].y, lastPassedWallId);
             }
         }
 
@@ -285,13 +288,18 @@ int main() {
             }
         }
 
-        // Check if soldier passed a wall
+       // Check if soldier passed a wall
         for(auto& wall : walls) {
             if(!wall.isPassed && soldiers.size() > 0 && soldiers[0].y <= wall.y1 && soldiers[0].x >= wall.x1 && soldiers[0].x <= wall.x2) {
                 wall.isPassed = true; // set the flag to true
+                lastPassedWallId = wall.wallId; // update the last passed wall's ID
+
                 for(auto& enemy : enemies) {
-                    enemy.isMoving = true; // set the flag to true
+                    if (enemy.wallId == wall.wallId) {
+                        enemy.isMoving = true; // set the flag to true for the enemies after the passed wall
+                    }
                 }
+
                 int numSoldiers = soldiers.size();
                 numSoldiers = wall.performOperation(numSoldiers);
                 while(soldiers.size() < numSoldiers) {
@@ -307,7 +315,7 @@ int main() {
 
         // Check if a wall has moved past the end of the window
         if (walls.back().y1 > WALL_GAP) {
-            generateSet(walls, enemies, 0);
+            generateSet(walls, enemies, 0, setId++);
         }
 
         // Remove enemies that have moved past the end of the window
