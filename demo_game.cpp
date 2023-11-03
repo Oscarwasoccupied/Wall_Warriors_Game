@@ -48,8 +48,11 @@ public:
         glEnd();
     }
 
-    void move(int dx) {
-        x += dx * MOVE_STEP; // Use the MOVE_STEP constant
+    void move(int dx, int windowWidth) {
+        int newX = x + dx * MOVE_STEP; // Calculate the new x coordinate
+        if (newX >= 0 && newX <= windowWidth - size) { // Check if the new x coordinate is within the window
+            x = newX; // Update the x coordinate
+        }
         y -= 1; // Move the soldier upwards
     }
 
@@ -115,9 +118,9 @@ public:
     int performOperation(int numSoldiers) {
         switch(operation) {
             case 0: return numSoldiers + 2; // add 2 soldiers
-            case 1: return numSoldiers - 2; // subtract 2 soldiers
+            case 1: return numSoldiers > 2 ? numSoldiers - 2 : 1; // subtract 2 soldiers, but ensure there's at least 1 soldier
             case 2: return numSoldiers * 2; // multiply by 2
-            case 3: return numSoldiers / 2; // divide by 2
+            case 3: return numSoldiers > 1 ? numSoldiers / 2 : 1; // divide by 2, but ensure there's at least 1 soldier
             default: return numSoldiers;
         }
     }
@@ -181,11 +184,11 @@ int main() {
         for(auto& soldier : soldiers) {
             soldier.draw();
             if(key == FSKEY_LEFT) {
-                soldier.move(-1); // Move the soldier to the left
+                soldier.move(-1, windowWidth); // Move the soldier to the left
             } else if(key == FSKEY_RIGHT) {
-                soldier.move(1); // Move the soldier to the right
+                soldier.move(1, windowWidth); // Move the soldier to the right
             } else {
-                soldier.move(0); // Keep moving upwards
+                soldier.move(0, windowWidth); // Keep moving upwards
             }
         }
 
@@ -209,6 +212,24 @@ int main() {
             }
             if (isHit) {
                 it = soldiers.erase(it);
+            } else {
+                ++it;
+            }
+        }
+
+        // Check for collisions between bullets and enemies
+        for (auto it = bullets.begin(); it != bullets.end(); ) {
+            bool isHit = false;
+            for (auto jt = enemies.begin(); jt != enemies.end(); ) {
+                if (abs(it->x - jt->x) < it->radius + jt->radius && abs(it->y - jt->y) < it->radius + jt->radius) {
+                    isHit = true;
+                    jt = enemies.erase(jt);
+                } else {
+                    ++jt;
+                }
+            }
+            if (isHit) {
+                it = bullets.erase(it);
             } else {
                 ++it;
             }
