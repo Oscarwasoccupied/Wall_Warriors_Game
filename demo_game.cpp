@@ -5,6 +5,34 @@
 const int SOLDIER_SIZE = 30;
 const int ENEMY_RADIUS = 20;
 
+const int MOVE_STEP = 5; // Define the left/right moving step of the soldier
+const int BULLET_RADIUS = 5;
+const int BULLET_SPEED = 10;
+
+class Bullet {
+public:
+    int x, y, radius;
+    double angle;
+
+    Bullet(int x, int y, int radius, double angle) : x(x), y(y), radius(radius), angle(angle) {}
+
+    void draw() {
+        glBegin(GL_POLYGON);
+        for(int i = 0; i < 360; i++) {
+            double angle = i * 3.14159 / 180;
+            double fx = x + cos(angle) * radius;
+            double fy = y + sin(angle) * radius;
+            glVertex2d(fx, fy);
+        }
+        glEnd();
+    }
+
+    void move() {
+        y -= BULLET_SPEED * sin(angle);
+        x += BULLET_SPEED * cos(angle);
+    }
+};
+
 class Soldier {
 public:
     int x, y, size;
@@ -21,8 +49,17 @@ public:
     }
 
     void move(int dx) {
-        x += dx;
+        x += dx * MOVE_STEP; // Use the MOVE_STEP constant
         y -= 1; // Move the soldier upwards
+    }
+
+    std::vector<Bullet> shoot(int numBullets) {
+        std::vector<Bullet> bullets;
+        for(int i = 0; i < numBullets; i++) {
+            double angle = (180.0 / (numBullets + 1) * (i + 1)) * 3.14159 / 180;
+            bullets.push_back(Bullet(x, y, BULLET_RADIUS, angle));
+        }
+        return bullets;
     }
 };
 
@@ -87,10 +124,13 @@ public:
 };
 
 int main() {
-    FsOpenWindow(0, 0, 800, 600, 1);
+    int windowWidth = 800;
+    int windowHeight = 600;
+    FsOpenWindow(0, 0, windowWidth, windowHeight, 1);
 
     std::vector<Soldier> soldiers;
-    soldiers.push_back(Soldier(100, 500, SOLDIER_SIZE));
+    soldiers.push_back(Soldier(windowWidth / 2, windowHeight - SOLDIER_SIZE, SOLDIER_SIZE));
+    
 
     std::vector<Enemy> enemies;
     enemies.push_back(Enemy(400, 300, ENEMY_RADIUS));
@@ -98,6 +138,9 @@ int main() {
     std::vector<Wall> walls;
     walls.push_back(Wall(100, 400, 390, 400, 0)); // Wall with operation 0 (add)
     walls.push_back(Wall(410, 400, 700, 400, 1)); // Wall with operation 1 (subtract)
+
+    std::vector<Bullet> bullets;
+    int lastShotTime = FsSubSecondTimer();
 
     // In the main loop
     while(FsInkey() != FSKEY_ESC) {
@@ -119,6 +162,21 @@ int main() {
             break;  // Exit the game
         }
 
+        // Create bullets every 3 seconds
+        if (FsSubSecondTimer() - lastShotTime >= 1000) {
+            for(auto& soldier : soldiers) {
+                auto newBullets = soldier.shoot(soldiers.size());
+                bullets.insert(bullets.end(), newBullets.begin(), newBullets.end());
+            }
+            lastShotTime = FsSubSecondTimer();
+        }
+
+        // Draw and move bullets
+        for(auto& bullet : bullets) {
+            bullet.draw();
+            bullet.move();
+        }
+        
         // Draw and move soldiers
         for(auto& soldier : soldiers) {
             soldier.draw();
@@ -171,7 +229,7 @@ int main() {
                 int numSoldiers = soldiers.size();
                 numSoldiers = wall.performOperation(numSoldiers);
                 while(soldiers.size() < numSoldiers) {
-                    int startX = soldiers[0].x + (soldiers.size() % 2 == 0 ? -SOLDIER_SIZE : SOLDIER_SIZE) * ((soldiers.size() + 1) / 2);
+                    int startX = soldiers[0].x + (soldiers.size() % 2 == 0 ? -SOLDIER_SIZE - 1 : SOLDIER_SIZE + 1) * ((soldiers.size() + 1) / 2);
                     soldiers.push_back(Soldier(startX, soldiers[0].y, SOLDIER_SIZE)); // add new soldiers at the same y position as the existing soldier
                 }
                 while(soldiers.size() > numSoldiers && soldiers.size() > 1) {
