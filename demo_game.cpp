@@ -1,6 +1,9 @@
 #include "fssimplewindow.h"
 #include <vector>
 #include <cmath>
+#include <cstdlib> // for rand and srand
+#include <ctime> // for time
+
 
 const int SOLDIER_SIZE = 30;
 const int ENEMY_RADIUS = 20;
@@ -135,9 +138,10 @@ int main() {
     std::vector<Soldier> soldiers;
     soldiers.push_back(Soldier(windowWidth / 2, windowHeight - SOLDIER_SIZE, SOLDIER_SIZE));
     
-
     std::vector<Enemy> enemies;
-    enemies.push_back(Enemy(400, 300, ENEMY_RADIUS));
+    int enemyX = rand() % (700 - 100 - 2 * ENEMY_RADIUS) + 100 + ENEMY_RADIUS; // Random x coordinate between the road
+    int enemyY = rand() % (400 - 2 * ENEMY_RADIUS) + ENEMY_RADIUS; // Random y coordinate between the top of the window and the wall
+    enemies.push_back(Enemy(enemyX, enemyY, ENEMY_RADIUS));
 
     std::vector<Wall> walls;
     walls.push_back(Wall(100, 400, 390, 400, 0)); // Wall with operation 0 (add)
@@ -263,6 +267,7 @@ int main() {
         FsSwapBuffers();
         FsSleep(25);
     }
+
 
     return 0;
 }
