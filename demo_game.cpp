@@ -89,10 +89,12 @@ public:
     }
 
     void move(int soldierX, int soldierY) {
-        if (x < soldierX) {
-            x += 1;
-        } else if (x > soldierX) {
-            x -= 1;
+        if (isMoving) {
+            if (x < soldierX) {
+                x += 1;
+            } else if (x > soldierX) {
+                x -= 1;
+            }
         }
         y += 1; // Always move the enemy downwards
     }
@@ -130,6 +132,7 @@ public:
 };
 
 int main() {
+    srand(time(0)); // Seed the random number generator
     int windowWidth = 800;
     int windowHeight = 600;
     FsOpenWindow(0, 0, windowWidth, windowHeight, 1);
@@ -138,9 +141,12 @@ int main() {
     soldiers.push_back(Soldier(windowWidth / 2, windowHeight - SOLDIER_SIZE, SOLDIER_SIZE));
     
     std::vector<Enemy> enemies;
-    int enemyX = rand() % (700 - 100 - 2 * ENEMY_RADIUS) + 100 + ENEMY_RADIUS; // Random x coordinate between the road
-    int enemyY = rand() % (200 - 2 * ENEMY_RADIUS) + ENEMY_RADIUS; // Random y coordinate between the top of the window and halfway to the wall
-    enemies.push_back(Enemy(enemyX, enemyY, ENEMY_RADIUS));
+    int numEnemies = rand() % 5 + 1; // Random number of enemies up to 5
+    for (int i = 0; i < numEnemies; i++) {
+        int enemyX = rand() % (700 - 100 - 2 * ENEMY_RADIUS) + 100 + ENEMY_RADIUS; // Random x coordinate between the road
+        int enemyY = rand() % (200 - 2 * ENEMY_RADIUS) + ENEMY_RADIUS; // Random y coordinate between the top of the window and halfway to the wall
+        enemies.push_back(Enemy(enemyX, enemyY, ENEMY_RADIUS));
+    }
 
     std::vector<Wall> walls;
     walls.push_back(Wall(100, 400, 390, 400, 0)); // Wall with operation 0 (add)
@@ -246,12 +252,12 @@ int main() {
         }
 
         // Check if soldier passed a wall
-        for(auto& wall : walls) {
-            if(!wall.isPassed && soldiers.size() > 0 && soldiers[0].y <= wall.y1 && soldiers[0].x >= wall.x1 && soldiers[0].x <= wall.x2) {
-                wall.isPassed = true; // set the flag to true
-                for(auto& enemy : enemies) {
-                    enemy.isMoving = true;
-                }
+            for(auto& wall : walls) {
+                if(!wall.isPassed && soldiers.size() > 0 && soldiers[0].y <= wall.y1 && soldiers[0].x >= wall.x1 && soldiers[0].x <= wall.x2) {
+                    wall.isPassed = true; // set the flag to true
+                    for(auto& enemy : enemies) {
+                        enemy.isMoving = true; // set the flag to true
+                    }
                 int numSoldiers = soldiers.size();
                 numSoldiers = wall.performOperation(numSoldiers);
                 while(soldiers.size() < numSoldiers) {
