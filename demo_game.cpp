@@ -5,6 +5,13 @@
 #include <cstdlib> // for rand and srand
 #include <ctime> // for time
 
+#define DEBUG_PRINT 1
+#ifdef DEBUG_PRINT
+#define DEBUG_PRINT(fmt, args...) printf(fmt, ##args)
+#else
+#define DEBUG_PRINT(fmt, args...)
+#endif
+
 const int WINDOW_WIDTH = 800;
 const int WINDOW_HEIGHT = 600;
 
@@ -141,9 +148,11 @@ public:
     int operation; // 0: add, 1: subtract, 2: multiply, 3: divide
     bool isPassed; // flag to track if a soldier has passed through the wall
     int wallId; // Add this line
-
+    bool operationPerformed; // Flag to check if the operation has been performed
+    bool canChangeSoldiers; // Flag to check if the number of soldiers can be changed
     // Constructor for the Wall class
-    Wall(int x1, int y1, int x2, int y2, int operation, int wallId) : x1(x1), y1(y1), x2(x2), y2(y2), operation(operation), isPassed(false), wallId(wallId) {}
+    Wall(int x1, int y1, int x2, int y2, int operation, int wallId)
+        : x1(x1), y1(y1), x2(x2), y2(y2), operation(operation), wallId(wallId), isPassed(false), operationPerformed(false), canChangeSoldiers(true) {}
 
     // Method to draw the wall on the screen
     void draw() {
@@ -166,14 +175,29 @@ public:
     }
 
     // Method to perform the operation on the number of soldiers
-    int performOperation(int numSoldiers) {
+   int performOperation(int numSoldiers) {
+        int newNumSoldiers;
         switch(operation) {
-            case 0: return numSoldiers + 2; // add 2 soldiers
-            case 1: return numSoldiers > 2 ? numSoldiers - 2 : 1; // subtract 2 soldiers, but ensure there's at least 1 soldier
-            case 2: return numSoldiers * 2; // multiply by 2
-            case 3: return numSoldiers > 1 ? numSoldiers / 2 : 1; // divide by 2, but ensure there's at least 1 soldier
-            default: return numSoldiers;
+            case 0: 
+                newNumSoldiers = numSoldiers + 2; // add 2 soldiers
+                DEBUG_PRINT("Passing through a +2 wall. Number of soldiers: %d\n", newNumSoldiers);
+                break;
+            case 1: 
+                newNumSoldiers = numSoldiers > 2 ? numSoldiers - 2 : 1; // subtract 2 soldiers, but ensure there's at least 1 soldier
+                DEBUG_PRINT("Passing through a -2 wall. Number of soldiers: %d\n", newNumSoldiers);
+                break;
+            case 2: 
+                newNumSoldiers = numSoldiers * 2; // multiply by 2
+                DEBUG_PRINT("Passing through a *2 wall. Number of soldiers: %d\n", newNumSoldiers);
+                break;
+            case 3: 
+                newNumSoldiers = numSoldiers > 1 ? numSoldiers / 2 : 1; // divide by 2, but ensure there's at least 1 soldier
+                DEBUG_PRINT("Passing through a /2 wall. Number of soldiers: %d\n", newNumSoldiers);
+                break;
+            default: 
+                newNumSoldiers = numSoldiers;
         }
+        return newNumSoldiers;
     }
 
     // Method to move the wall
@@ -377,21 +401,28 @@ int main() {
                 }
 
                 // Perform the wall's operation on the number of soldiers
-                int numSoldiers = wall.performOperation(soldiers.size());
+                if (!wall.operationPerformed) {
+                    int numSoldiers = soldiers.size();
+                    int newNumSoldiers = wall.performOperation(numSoldiers);
 
-                // Add new soldiers if the number of soldiers increased
-                while(soldiers.size() < numSoldiers) {
-                    int startX = soldiers[0].x + (soldiers.size() % 2 == 0 ? -SOLDIER_SIZE - 1 : SOLDIER_SIZE + 1) * ((soldiers.size() + 1) / 2);
-                    soldiers.push_back(Soldier(startX, soldiers[0].y, SOLDIER_SIZE));
+                    // Add new soldiers if the number of soldiers increased
+                    while(soldiers.size() < newNumSoldiers) {
+                        int startX = soldiers[0].x + (soldiers.size() % 2 == 0 ? -SOLDIER_SIZE - 1 : SOLDIER_SIZE + 1) * ((soldiers.size() + 1) / 2);
+                        soldiers.push_back(Soldier(startX, soldiers[0].y, SOLDIER_SIZE));
+                    }
+
+                    // Remove soldiers if the number of soldiers decreased
+                    while(soldiers.size() > newNumSoldiers && soldiers.size() > 1) {
+                        soldiers.pop_back();
+                    }
+
+                    wall.operationPerformed = true; // Mark the operation as performed
                 }
+            }
 
-                // Remove soldiers if the number of soldiers decreased
-                while(soldiers.size() > numSoldiers && soldiers.size() > 1) {
-                    soldiers.pop_back();
-                }
-
-                // Exit the loop after applying the wall's effect
-                break;
+            // Check if the soldier has completely passed a wall and reset the operationPerformed flag
+            if(wall.isPassed && soldiers.size() > 0 && soldiers[0].y + soldiers[0].size <= wall.y1 && soldiers[0].x >= wall.x1 && soldiers[0].x <= wall.x2) {
+                wall.operationPerformed = false; // Allow the operation to be performed again when they pass the next wall
             }
         }
 
