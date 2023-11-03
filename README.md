@@ -1,4 +1,4 @@
-# Wall_Warriors_Game
+# Wall Warriors Game
 **Game Description**
 
 The game is a simple 2D shooter where the player controls a group of soldiers moving forward on a road, fighting against enemies and overcoming walls with special properties.
