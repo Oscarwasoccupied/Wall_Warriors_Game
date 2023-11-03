@@ -288,6 +288,21 @@ int main() {
             }
         }
 
+        // Check for collisions between bullets and walls
+        for (auto it = bullets.begin(); it != bullets.end(); ) {
+            bool isHit = false;
+            for (auto& wall : walls) {
+                if (it->y <= wall.y1 && it->x >= wall.x1 && it->x <= wall.x2) {
+                    isHit = true;
+                    break;
+                }
+            }
+            if (isHit) {
+                it = bullets.erase(it); // Remove the bullet if it hits a wall
+            } else {
+                ++it;
+            }
+        }
        // Check if soldier passed a wall
         for(auto& wall : walls) {
             if(!wall.isPassed && soldiers.size() > 0 && soldiers[0].y <= wall.y1 && soldiers[0].x >= wall.x1 && soldiers[0].x <= wall.x2) {
