@@ -78,12 +78,16 @@ public:
     }
 
     // Method to move the soldier left or right within the window
-    void move(int dx, int windowWidth) {
-        int newX = x + dx * MOVE_STEP; // Calculate the new x coordinate
-        if (newX >= 0 && newX <= windowWidth - size) { // Check if the new x coordinate is within the window
-            x = newX; // Update the x coordinate
-        }
+    // Method to move the soldier left or right within the window
+   // Method to move the soldier left or right within the window
+void move(int dx, int windowWidth, int leftBoundary, int rightBoundary) {
+    int newX = x + dx * MOVE_STEP; // Calculate the new x coordinate
+    if ((newX >= leftBoundary && newX <= rightBoundary - size) || // Check if the new x coordinate is within the window
+        (x == leftBoundary && dx > 0) || // Check if the soldier is at the left boundary and the movement is to the right
+        (x == rightBoundary - size && dx < 0)) { // Check if the soldier is at the right boundary and the movement is to the left
+        x = newX; // Update the x coordinate
     }
+}
 
     // Method to shoot bullets at different angles
     std::vector<Bullet> shoot(int numBullets) {
@@ -275,7 +279,6 @@ int main() {
         //     lastShotTime = FsSubSecondTimer();
         // }
 
-        
         // Create bullets every SHOOTING_FREQUENCY milliseconds
         // Shoting Method 2: Shoot bullets at different angles 
         if (FsSubSecondTimer() - lastShotTime >= SHOOTING_FREQUENCY) {
@@ -291,17 +294,21 @@ int main() {
             bullet.move();
         }
         
+        int leftBoundary = 100; // Left boundary of the road
+        int rightBoundary = 700; // Right boundary of the road
+
         // Draw and move soldiers
         for(auto& soldier : soldiers) {
             soldier.draw();
             if(key == FSKEY_LEFT) {
-                soldier.move(-1, windowWidth); // Move the soldier to the left
+                soldier.move(-1, windowWidth, leftBoundary, rightBoundary); // Move the soldier to the left
             } else if(key == FSKEY_RIGHT) {
-                soldier.move(1, windowWidth); // Move the soldier to the right
+                soldier.move(1, windowWidth, leftBoundary, rightBoundary); // Move the soldier to the right
             } else {
-                soldier.move(0, windowWidth); // Keep moving upwards
+                soldier.move(0, windowWidth, leftBoundary, rightBoundary); // Keep moving upwards
             }
         }
+
 
         // Draw and move enemies
         for(auto& enemy : enemies) {
@@ -408,8 +415,19 @@ int main() {
 
                 // Add new soldiers if the number of soldiers increased
                 while(soldiers.size() < newNumSoldiers) {
-                    int startX = soldiers[0].x + (soldiers.size() % 2 == 0 ? -SOLDIER_SIZE - 1 : SOLDIER_SIZE + 1) * ((soldiers.size() + 1) / 2);
-                    soldiers.push_back(Soldier(startX, soldiers[0].y, SOLDIER_SIZE));
+                    int startX;
+                    if (soldiers.back().x + SOLDIER_SIZE + 1 <= rightBoundary) { // If there's room on the right
+                        startX = soldiers.back().x + SOLDIER_SIZE + 1; // Add new soldiers on the right side of the existing soldiers
+                    } else { // If there's no room on the right
+                        startX = soldiers.front().x - SOLDIER_SIZE - 1; // Add new soldiers on the left side of the existing soldiers
+                    }
+
+                    // Ensure the new soldier is within the road boundaries
+                    if (startX >= leftBoundary && startX + SOLDIER_SIZE <= rightBoundary) {
+                        soldiers.push_back(Soldier(startX, soldiers[0].y, SOLDIER_SIZE));
+                    } else {
+                        break; // If there's no room to add new soldiers, break the loop
+                    }
                 }
 
                 // Remove soldiers if the number of soldiers decreased
