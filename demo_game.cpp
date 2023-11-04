@@ -77,8 +77,6 @@ public:
     }
 
     // Method to move the soldier left or right within the window
-    // Method to move the soldier left or right within the window
-   // Method to move the soldier left or right within the window
 void move(int dx, int windowWidth, int leftBoundary, int rightBoundary) {
     int newX = x + dx * MOVE_STEP; // Calculate the new x coordinate
     if ((newX >= leftBoundary && newX <= rightBoundary - size) || // Check if the new x coordinate is within the window
