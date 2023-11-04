@@ -388,8 +388,8 @@ int main() {
 
         // Check if soldier passed a wall
         for(auto& wall : walls) {
-            // Check if the soldier has passed a wall and perform the wall's operation
-            if(!wall.isPassed && soldiers.size() > 0 && soldiers[0].y <= wall.y1 && soldiers[0].x >= wall.x1 && soldiers[0].x <= wall.x2) {
+            // Check if the soldier has passed the y-coordinate of a wall and start the enemies moving
+            if(!wall.isPassed && soldiers.size() > 0 && soldiers[0].y <= wall.y1) {
                 wall.isPassed = true; // Mark the wall as passed
                 lastPassedWallId = wall.wallId; // Update the ID of the last passed wall
 
@@ -399,29 +399,29 @@ int main() {
                         enemy.isMoving = true;
                     }
                 }
+            }
 
-                // Perform the wall's operation on the number of soldiers
-                if (!wall.operationPerformed) {
-                    int numSoldiers = soldiers.size();
-                    int newNumSoldiers = wall.performOperation(numSoldiers);
+            // Check if the soldier has passed through a wall and perform the wall's operation
+            if(wall.isPassed && !wall.operationPerformed && soldiers.size() > 0 && soldiers[0].y <= wall.y1 && soldiers[0].x >= wall.x1 && soldiers[0].x <= wall.x2) {
+                int numSoldiers = soldiers.size();
+                int newNumSoldiers = wall.performOperation(numSoldiers);
 
-                    // Add new soldiers if the number of soldiers increased
-                    while(soldiers.size() < newNumSoldiers) {
-                        int startX = soldiers[0].x + (soldiers.size() % 2 == 0 ? -SOLDIER_SIZE - 1 : SOLDIER_SIZE + 1) * ((soldiers.size() + 1) / 2);
-                        soldiers.push_back(Soldier(startX, soldiers[0].y, SOLDIER_SIZE));
-                    }
-
-                    // Remove soldiers if the number of soldiers decreased
-                    while(soldiers.size() > newNumSoldiers && soldiers.size() > 1) {
-                        soldiers.pop_back();
-                    }
-
-                    wall.operationPerformed = true; // Mark the operation as performed
+                // Add new soldiers if the number of soldiers increased
+                while(soldiers.size() < newNumSoldiers) {
+                    int startX = soldiers[0].x + (soldiers.size() % 2 == 0 ? -SOLDIER_SIZE - 1 : SOLDIER_SIZE + 1) * ((soldiers.size() + 1) / 2);
+                    soldiers.push_back(Soldier(startX, soldiers[0].y, SOLDIER_SIZE));
                 }
+
+                // Remove soldiers if the number of soldiers decreased
+                while(soldiers.size() > newNumSoldiers && soldiers.size() > 1) {
+                    soldiers.pop_back();
+                }
+
+                wall.operationPerformed = true; // Mark the operation as performed
             }
 
             // Check if the soldier has completely passed a wall and reset the operationPerformed flag
-            if(wall.isPassed && soldiers.size() > 0 && soldiers[0].y + soldiers[0].size <= wall.y1 && soldiers[0].x >= wall.x1 && soldiers[0].x <= wall.x2) {
+            if(wall.isPassed && wall.operationPerformed && soldiers.size() > 0 && soldiers[0].y + soldiers[0].size < wall.y1) {
                 wall.operationPerformed = false; // Allow the operation to be performed again when they pass the next wall
             }
         }
