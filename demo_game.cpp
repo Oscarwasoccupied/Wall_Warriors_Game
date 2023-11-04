@@ -18,7 +18,6 @@ const int WINDOW_HEIGHT = 600;
 const int SOLDIER_SIZE = 30;
 const int ENEMY_RADIUS = 12;
 
-
 const int MOVE_STEP = 5; // Define the left/right moving step of the soldier
 const int BULLET_RADIUS = 5; // Define the size of the bullet
 const int BULLET_SPEED = 10; // Define the speed of the bullet
@@ -266,6 +265,11 @@ int main() {
         if(FSKEY_ESC == key) // if the user press ESC key
         {
             break;  // Exit the game
+        }
+
+        // Check if there are no soldiers left
+        if (soldiers.empty()) {
+            break; // Exit the game
         }
 
         // Create bullets every SHOOTING_FREQUENCY milliseconds
