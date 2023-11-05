@@ -26,12 +26,15 @@ const int SHOOTING_FREQUENCY = 900; // Frequency of bullet shooting in milliseco
 const int MAX_ENEMIES = 20; // Maximum number of enemies that can be generated
 const int WALL_GAP = WINDOW_HEIGHT - WINDOW_HEIGHT / 3; // Distance between sets of walls
 
+const double SPEED = 1.5; // Define the speed of the walls and enemies
+
 // Class representing a bullet in the game
 // Each bullet has a position (x, y), a radius, and an angle
 // The bullet can be drawn and moved
 class Bullet {
 public:
-    int x, y, radius; // Position and size of the bullet
+    double x, y; // Position of the bullet
+    int radius; // Size of the bullet
     double angle; // Direction of the bullet
 
     // Constructor for the Bullet class
@@ -61,7 +64,8 @@ public:
 // The soldier can be drawn, moved, and can shoot bullets
 class Soldier {
 public:
-    int x, y, size; // Position and size of the soldier
+    double x, y; // Position of the soldier
+    int size; // Size of the soldier
 
     // Constructor for the Soldier class
     Soldier(int x, int y, int size) : x(x), y(y), size(size) {}
@@ -145,16 +149,16 @@ public:
 // The wall can be drawn, moved, and perform an operation on the number of soldiers
 class Wall {
 public:
-    int x1, y1, x2, y2;
+    double x1, y1, x2, y2; // Change y1 and y2 to double
     int operation; // 0: add, 1: subtract, 2: multiply, 3: divide
     bool isPassed; // flag to track if a soldier has passed through the wall
     int wallId; // Add this line
     bool operationPerformed; // Flag to check if the operation has been performed
     bool canChangeSoldiers; // Flag to check if the number of soldiers can be changed
     // Constructor for the Wall class
-    Wall(int x1, int y1, int x2, int y2, int operation, int wallId)
+    Wall(double x1, double y1, double x2, double y2, int operation, int wallId)
         : x1(x1), y1(y1), x2(x2), y2(y2), operation(operation), wallId(wallId), isPassed(false), operationPerformed(false), canChangeSoldiers(true) {}
-
+    
     // Method to draw the wall on the screen
     void draw() {
         glBegin(GL_LINES);
@@ -202,9 +206,9 @@ public:
     }
 
     // Method to move the wall
-    void move() {
-        y1 += 1; // Move the wall downwards
-        y2 += 1;
+    void move(double speed) {
+        y1 += speed; // Move the wall downwards
+        y2 += speed;
     }
 };
 
@@ -223,7 +227,7 @@ void generateSet(std::vector<Wall>& walls, std::vector<Enemy>& enemies, int y, i
         int enemyX = rand() % (700 - 100 - 2 * ENEMY_RADIUS) + 100 + ENEMY_RADIUS; // Random x coordinate between the road
         int enemyY = y - WALL_GAP/3 - rand() % (2*WALL_GAP/3 - 2 * ENEMY_RADIUS) - ENEMY_RADIUS; // Random y coordinate between the wall and two thirds to the next wall
         double enemySpeed = 1; // Set the speed of the enemy
-        enemies.push_back(Enemy(enemyX, enemyY, ENEMY_RADIUS, enemySpeed, setId)); // Set the wallId field to the setId
+        enemies.push_back(Enemy(enemyX, enemyY, ENEMY_RADIUS, SPEED, setId)); // Set the speed of the enemy, Set the wallId field to the setId
     }
 }
 
@@ -323,7 +327,7 @@ int main() {
         // Draw and move walls
         for(auto& wall : walls) {
             wall.draw();
-            wall.move();
+            wall.move(SPEED);
         }
 
         // Check for collisions between soldiers and enemies
