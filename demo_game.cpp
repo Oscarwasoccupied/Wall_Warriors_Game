@@ -7,10 +7,11 @@
 
 #define DEBUG_PRINT 1
 #ifdef DEBUG_PRINT
-#define DEBUG_PRINT(fmt, args...) printf(fmt, ##args)
+#define DEBUG_PRINT(fmt, ...) printf(fmt, __VA_ARGS__)
 #else
-#define DEBUG_PRINT(fmt, args...)
+#define DEBUG_PRINT(fmt, ...)
 #endif
+
 
 const int WINDOW_WIDTH = 800;
 const int WINDOW_HEIGHT = 600;
@@ -43,7 +44,7 @@ public:
     // Method to draw the bullet on the screen
     void draw() {
         glBegin(GL_POLYGON);
-        for(int i = 0; i < 360; i++) {
+        for (int i = 0; i < 360; i++) {
             double angle = i * 3.14159 / 180; // Convert degrees to radians
             double fx = x + cos(angle) * radius; // Calculate the x coordinate
             double fy = y + sin(angle) * radius; // Calculate the y coordinate
@@ -81,19 +82,19 @@ public:
     }
 
     // Method to move the soldier left or right within the window
-void move(int dx, int windowWidth, int leftBoundary, int rightBoundary) {
-    int newX = x + dx * MOVE_STEP; // Calculate the new x coordinate
-    if ((newX >= leftBoundary && newX <= rightBoundary - size) || // Check if the new x coordinate is within the window
-        (x == leftBoundary && dx > 0) || // Check if the soldier is at the left boundary and the movement is to the right
-        (x == rightBoundary - size && dx < 0)) { // Check if the soldier is at the right boundary and the movement is to the left
-        x = newX; // Update the x coordinate
+    void move(int dx, int windowWidth, int leftBoundary, int rightBoundary) {
+        int newX = x + dx * MOVE_STEP; // Calculate the new x coordinate
+        if ((newX >= leftBoundary && newX <= rightBoundary - size) || // Check if the new x coordinate is within the window
+            (x == leftBoundary && dx > 0) || // Check if the soldier is at the left boundary and the movement is to the right
+            (x == rightBoundary - size && dx < 0)) { // Check if the soldier is at the right boundary and the movement is to the left
+            x = newX; // Update the x coordinate
+        }
     }
-}
 
     // Method to shoot bullets at different angles
     std::vector<Bullet> shoot(int numBullets) {
         std::vector<Bullet> bullets;
-        for(int i = 0; i < numBullets; i++) {
+        for (int i = 0; i < numBullets; i++) {
             double angle = (180.0 / (numBullets + 1) * (i + 1)) * 3.14159 / 180;
             bullets.push_back(Bullet(x + size / 2, y, BULLET_RADIUS, angle));
         }
@@ -120,7 +121,7 @@ public:
     // Method to draw the enemy on the screen
     void draw() {
         glBegin(GL_POLYGON);
-        for(int i = 0; i < 360; i++) {
+        for (int i = 0; i < 360; i++) {
             double angle = i * 3.14159 / 180;
             double fx = x + cos(angle) * radius;
             double fy = y + sin(angle) * radius;
@@ -137,7 +138,8 @@ public:
         if (wallId <= passedWallId) {
             if (x < soldierX) {
                 x += speed; // Move the enemy to the right
-            } else if (x > soldierX) {
+            }
+            else if (x > soldierX) {
                 x -= speed; // Move the enemy to the left
             }
         }
@@ -158,7 +160,7 @@ public:
     // Constructor for the Wall class
     Wall(double x1, double y1, double x2, double y2, int operation, int wallId)
         : x1(x1), y1(y1), x2(x2), y2(y2), operation(operation), wallId(wallId), isPassed(false), operationPerformed(false), canChangeSoldiers(true) {}
-    
+
     // Method to draw the wall on the screen
     void draw() {
         glBegin(GL_LINES);
@@ -168,11 +170,11 @@ public:
 
         // Draw operation text
         char operationText[10];
-        switch(operation) {
-            case 0: strcpy(operationText, "+2"); break;
-            case 1: strcpy(operationText, "-2"); break;
-            case 2: strcpy(operationText, "x2"); break;
-            case 3: strcpy(operationText, "/2"); break;
+        switch (operation) {
+        case 0: strcpy(operationText, "+2"); break;
+        case 1: strcpy(operationText, "-2"); break;
+        case 2: strcpy(operationText, "x2"); break;
+        case 3: strcpy(operationText, "/2"); break;
         }
         glColor3ub(0, 0, 0); // Set color to black
         glRasterPos2i((x1 + x2) / 2, y1 + 20); // Position the text below the wall
@@ -180,27 +182,27 @@ public:
     }
 
     // Method to perform the operation on the number of soldiers
-   int performOperation(int numSoldiers) {
+    int performOperation(int numSoldiers) {
         int newNumSoldiers;
-        switch(operation) {
-            case 0: 
-                newNumSoldiers = numSoldiers + 2; // add 2 soldiers
-                DEBUG_PRINT("Passing through a +2 wall. Number of soldiers: %d\n", newNumSoldiers);
-                break;
-            case 1: 
-                newNumSoldiers = numSoldiers > 2 ? numSoldiers - 2 : 1; // subtract 2 soldiers, but ensure there's at least 1 soldier
-                DEBUG_PRINT("Passing through a -2 wall. Number of soldiers: %d\n", newNumSoldiers);
-                break;
-            case 2: 
-                newNumSoldiers = numSoldiers * 2; // multiply by 2
-                DEBUG_PRINT("Passing through a *2 wall. Number of soldiers: %d\n", newNumSoldiers);
-                break;
-            case 3: 
-                newNumSoldiers = numSoldiers > 1 ? numSoldiers / 2 : 1; // divide by 2, but ensure there's at least 1 soldier
-                DEBUG_PRINT("Passing through a /2 wall. Number of soldiers: %d\n", newNumSoldiers);
-                break;
-            default: 
-                newNumSoldiers = numSoldiers;
+        switch (operation) {
+        case 0:
+            newNumSoldiers = numSoldiers + 2; // add 2 soldiers
+            DEBUG_PRINT("Passing through a +2 wall. Number of soldiers: %d\n", newNumSoldiers);
+            break;
+        case 1:
+            newNumSoldiers = numSoldiers > 2 ? numSoldiers - 2 : 1; // subtract 2 soldiers, but ensure there's at least 1 soldier
+            DEBUG_PRINT("Passing through a -2 wall. Number of soldiers: %d\n", newNumSoldiers);
+            break;
+        case 2:
+            newNumSoldiers = numSoldiers * 2; // multiply by 2
+            DEBUG_PRINT("Passing through a *2 wall. Number of soldiers: %d\n", newNumSoldiers);
+            break;
+        case 3:
+            newNumSoldiers = numSoldiers > 1 ? numSoldiers / 2 : 1; // divide by 2, but ensure there's at least 1 soldier
+            DEBUG_PRINT("Passing through a /2 wall. Number of soldiers: %d\n", newNumSoldiers);
+            break;
+        default:
+            newNumSoldiers = numSoldiers;
         }
         return newNumSoldiers;
     }
@@ -225,7 +227,7 @@ void generateSet(std::vector<Wall>& walls, std::vector<Enemy>& enemies, int y, i
     int numEnemies = rand() % MAX_ENEMIES + 1; // Random number of enemies up to MAX_ENEMIES
     for (int i = 0; i < numEnemies; i++) {
         int enemyX = rand() % (700 - 100 - 2 * ENEMY_RADIUS) + 100 + ENEMY_RADIUS; // Random x coordinate between the road
-        int enemyY = y - WALL_GAP/3 - rand() % (2*WALL_GAP/3 - 2 * ENEMY_RADIUS) - ENEMY_RADIUS; // Random y coordinate between the wall and two thirds to the next wall
+        int enemyY = y - WALL_GAP / 3 - rand() % (2 * WALL_GAP / 3 - 2 * ENEMY_RADIUS) - ENEMY_RADIUS; // Random y coordinate between the wall and two thirds to the next wall
         double enemySpeed = 1; // Set the speed of the enemy
         enemies.push_back(Enemy(enemyX, enemyY, ENEMY_RADIUS, SPEED, setId)); // Set the speed of the enemy, Set the wallId field to the setId
     }
@@ -240,7 +242,7 @@ int main() {
 
     std::vector<Soldier> soldiers;
     soldiers.push_back(Soldier(windowWidth / 2, windowHeight - SOLDIER_SIZE, SOLDIER_SIZE));
-    
+
     std::vector<Wall> walls;
     std::vector<Enemy> enemies;
     int setId = 0;
@@ -250,7 +252,7 @@ int main() {
     int lastShotTime = FsSubSecondTimer();
 
     int lastPassedWallId = -1;
-    while(FsInkey() != FSKEY_ESC) {
+    while (FsInkey() != FSKEY_ESC) {
         glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
         // Draw road
@@ -263,8 +265,8 @@ int main() {
 
         FsPollDevice();  // Check for user input
         auto key = FsInkey();
-        
-        if(FSKEY_ESC == key) // if the user press ESC key
+
+        if (FSKEY_ESC == key) // if the user press ESC key
         {
             break;  // Exit the game
         }
@@ -295,29 +297,31 @@ int main() {
         }
 
         // Draw and move bullets
-        for(auto& bullet : bullets) {
+        for (auto& bullet : bullets) {
             bullet.draw();
             bullet.move();
         }
-        
+
         int leftBoundary = 100; // Left boundary of the road
         int rightBoundary = 700; // Right boundary of the road
 
         // Draw and move soldiers
-        for(auto& soldier : soldiers) {
+        for (auto& soldier : soldiers) {
             soldier.draw();
-            if(key == FSKEY_LEFT) {
+            if (key == FSKEY_LEFT) {
                 soldier.move(-1, windowWidth, leftBoundary, rightBoundary); // Move the soldier to the left
-            } else if(key == FSKEY_RIGHT) {
+            }
+            else if (key == FSKEY_RIGHT) {
                 soldier.move(1, windowWidth, leftBoundary, rightBoundary); // Move the soldier to the right
-            } else {
+            }
+            else {
                 soldier.move(0, windowWidth, leftBoundary, rightBoundary); // Keep moving upwards
             }
         }
 
 
         // Draw and move enemies
-        for(auto& enemy : enemies) {
+        for (auto& enemy : enemies) {
             enemy.draw();
             if (soldiers.size() > 0) {
                 enemy.move(soldiers[0].x, soldiers[0].y, lastPassedWallId);
@@ -325,7 +329,7 @@ int main() {
         }
 
         // Draw and move walls
-        for(auto& wall : walls) {
+        for (auto& wall : walls) {
             wall.draw();
             wall.move(SPEED);
         }
@@ -344,7 +348,7 @@ int main() {
             // If a collision is detected, remove the soldier
             if (isHit) {
                 it = soldiers.erase(it);
-            } 
+            }
             // If no collision is detected, move to the next soldier
             else {
                 ++it;
@@ -362,7 +366,8 @@ int main() {
                     // If a collision is detected, set the hit flag to true and remove the enemy
                     isHit = true;
                     jt = enemies.erase(jt);
-                } else {
+                }
+                else {
                     // If no collision is detected, move to the next enemy
                     ++jt;
                 }
@@ -370,7 +375,8 @@ int main() {
             // If a collision is detected, remove the bullet
             if (isHit) {
                 it = bullets.erase(it);
-            } else {
+            }
+            else {
                 // If no collision is detected, move to the next bullet
                 ++it;
             }
@@ -392,7 +398,7 @@ int main() {
             // If a collision is detected, remove the bullet
             if (isHit) {
                 it = bullets.erase(it);
-            } 
+            }
             // If no collision is detected, move to the next bullet
             else {
                 ++it;
@@ -400,14 +406,14 @@ int main() {
         }
 
         // Check if soldier passed a wall
-        for(auto& wall : walls) {
+        for (auto& wall : walls) {
             // Check if the soldier has passed the y-coordinate of a wall and start the enemies moving
-            if(!wall.isPassed && soldiers.size() > 0 && soldiers[0].y <= wall.y1) {
+            if (!wall.isPassed && soldiers.size() > 0 && soldiers[0].y <= wall.y1) {
                 wall.isPassed = true; // Mark the wall as passed
                 lastPassedWallId = wall.wallId; // Update the ID of the last passed wall
 
                 // Set the enemies associated with the passed wall to start moving
-                for(auto& enemy : enemies) {
+                for (auto& enemy : enemies) {
                     if (enemy.wallId == wall.wallId) {
                         enemy.isMoving = true;
                     }
@@ -415,29 +421,31 @@ int main() {
             }
 
             // Check if the soldier has passed through a wall and perform the wall's operation
-            if(wall.isPassed && !wall.operationPerformed && soldiers.size() > 0 && soldiers[0].y <= wall.y1 && soldiers[0].x >= wall.x1 && soldiers[0].x <= wall.x2) {
+            if (wall.isPassed && !wall.operationPerformed && soldiers.size() > 0 && soldiers[0].y <= wall.y1 && soldiers[0].x >= wall.x1 && soldiers[0].x <= wall.x2) {
                 int numSoldiers = soldiers.size();
                 int newNumSoldiers = wall.performOperation(numSoldiers);
 
                 // Add new soldiers if the number of soldiers increased
-                while(soldiers.size() < newNumSoldiers) {
+                while (soldiers.size() < newNumSoldiers) {
                     int startX;
                     if (soldiers.back().x + SOLDIER_SIZE + 1 <= rightBoundary) { // If there's room on the right
                         startX = soldiers.back().x + SOLDIER_SIZE + 1; // Add new soldiers on the right side of the existing soldiers
-                    } else { // If there's no room on the right
+                    }
+                    else { // If there's no room on the right
                         startX = soldiers.front().x - SOLDIER_SIZE - 1; // Add new soldiers on the left side of the existing soldiers
                     }
 
                     // Ensure the new soldier is within the road boundaries
                     if (startX >= leftBoundary && startX + SOLDIER_SIZE <= rightBoundary) {
                         soldiers.push_back(Soldier(startX, soldiers[0].y, SOLDIER_SIZE));
-                    } else {
+                    }
+                    else {
                         break; // If there's no room to add new soldiers, break the loop
                     }
                 }
 
                 // Remove soldiers if the number of soldiers decreased
-                while(soldiers.size() > newNumSoldiers && soldiers.size() > 1) {
+                while (soldiers.size() > newNumSoldiers && soldiers.size() > 1) {
                     soldiers.pop_back();
                 }
 
@@ -445,7 +453,7 @@ int main() {
             }
 
             // Check if the soldier has completely passed a wall and reset the operationPerformed flag
-            if(wall.isPassed && wall.operationPerformed && soldiers.size() > 0 && soldiers[0].y + soldiers[0].size < wall.y1) {
+            if (wall.isPassed && wall.operationPerformed && soldiers.size() > 0 && soldiers[0].y + soldiers[0].size < wall.y1) {
                 wall.operationPerformed = false; // Allow the operation to be performed again when they pass the next wall
             }
         }
@@ -459,7 +467,8 @@ int main() {
         for (auto it = enemies.begin(); it != enemies.end(); ) {
             if (it->y > windowHeight) {
                 it = enemies.erase(it);
-            } else {
+            }
+            else {
                 ++it;
             }
         }
@@ -468,17 +477,19 @@ int main() {
         for (auto it = walls.begin(); it != walls.end(); ) {
             if (it->y1 > windowHeight) {
                 it = walls.erase(it);
-            } else {
+            }
+            else {
                 ++it;
             }
         }
 
-        
+
         // Remove enemies that have moved past the end of the window
         for (auto it = enemies.begin(); it != enemies.end(); ) {
             if (it->y > windowHeight) {
                 it = enemies.erase(it);
-            } else {
+            }
+            else {
                 ++it;
             }
         }
@@ -487,11 +498,12 @@ int main() {
         for (auto it = walls.begin(); it != walls.end(); ) {
             if (it->y1 > windowHeight) {
                 it = walls.erase(it);
-            } else {
+            }
+            else {
                 ++it;
             }
         }
-        
+
         FsSwapBuffers();
         FsSleep(25);
     }
