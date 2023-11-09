@@ -24,7 +24,7 @@ const int BULLET_RADIUS = 5; // Define the size of the bullet
 const int BULLET_SPEED = 10; // Define the speed of the bullet
 const int SHOOTING_FREQUENCY = 900; // Frequency of bullet shooting in milliseconds
 
-const int CURRENT_ENEMIES = 5;
+int CURRENT_ENEMIES = 5;
 const int MAX_ENEMIES = 20; // Maximum number of enemies that can be generated
 const int WALL_GAP = WINDOW_HEIGHT - WINDOW_HEIGHT / 3; // Distance between sets of walls
 
@@ -102,10 +102,10 @@ public:
     Soldier(int x, int y, int size) : x(x), y(y), size(size) {}
 
     void increaseSpeed() {
-        if (speedMultiplier < 2.0) {
-            speedMultiplier *= 1.1;
-            if (speedMultiplier > 2.0) {
-                speedMultiplier = 2.0;
+        if (speedMultiplier < 4.0) {
+            speedMultiplier *= 1.25;
+            if (speedMultiplier > 4.0) {
+                speedMultiplier = 4.0;
             }
         }
     }
@@ -267,7 +267,11 @@ void generateSet(std::vector<Wall>& walls, std::vector<Enemy>& enemies, int y, i
     operation = rand() % 4; // Random operation (0, 1, 2, or 3)
     walls.push_back(Wall(410, y, 690, y, operation, setId)); // Wall with random operation
 
-    int numEnemies = rand() % MAX_ENEMIES + 1; // Random number of enemies up to MAX_ENEMIES
+    // int numEnemies = rand() % MAX_ENEMIES + 1; // Random number of enemies up to MAX_ENEMIES
+    int numEnemies = rand() % CURRENT_ENEMIES + 1; // Random number of enemies up to CURRENT_ENEMIES
+    if (CURRENT_ENEMIES < MAX_ENEMIES) {
+        CURRENT_ENEMIES += 2;
+    }
     for (int i = 0; i < numEnemies; i++) {
         int enemyX = rand() % (700 - 100 - 2 * ENEMY_RADIUS) + 100 + ENEMY_RADIUS; // Random x coordinate between the road
         int enemyY = y - WALL_GAP / 3 - rand() % (2 * WALL_GAP / 3 - 2 * ENEMY_RADIUS) - ENEMY_RADIUS; // Random y coordinate between the wall and two thirds to the next wall
