@@ -24,6 +24,7 @@ const int BULLET_RADIUS = 5; // Define the size of the bullet
 const int BULLET_SPEED = 10; // Define the speed of the bullet
 const int SHOOTING_FREQUENCY = 900; // Frequency of bullet shooting in milliseconds
 
+const int CURRENT_ENEMIES = 5;
 const int MAX_ENEMIES = 20; // Maximum number of enemies that can be generated
 const int WALL_GAP = WINDOW_HEIGHT - WINDOW_HEIGHT / 3; // Distance between sets of walls
 
@@ -50,6 +51,9 @@ public:
         glColor3ub(0, 0, 0);
         glRasterPos2i(x - 20, y + 5);
         YsGlDrawFontBitmap8x12("speed!");
+    }
+    void move(double speed) {
+        y += speed;
     }
 };
 
@@ -409,6 +413,10 @@ int main() {
         if (!powerUpVisible && powerUpTimer >= POWER_UP_INTERVAL) {
             int randomX = rand() % (windowWidth - 20) + 10;
             int randomY = rand() % (windowHeight - 20) + 10;
+
+            randomX = rand() % (700 - 100 - 2 * ENEMY_RADIUS) + 100 + ENEMY_RADIUS; // Random x coordinate between the road
+            randomY = randomY - WALL_GAP / 3 - rand() % (2 * WALL_GAP / 3 - 2 * ENEMY_RADIUS) - ENEMY_RADIUS; // Random y coordinate between the wall and two thirds to the next wall
+
             speedPowerUp = SpeedPowerUp(randomX, randomY, 10);
             powerUpVisible = true;
             powerUpTimer = 0;
@@ -416,6 +424,11 @@ int main() {
 
         if (powerUpVisible) {
             speedPowerUp.draw();
+            speedPowerUp.move(SPEED);
+            if (speedPowerUp.y > windowHeight) {
+                powerUpVisible = false;
+                powerUpTimer = 0;
+            }
         }
 
         if (!powerUpVisible) {
