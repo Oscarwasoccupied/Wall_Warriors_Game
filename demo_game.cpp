@@ -29,6 +29,31 @@ const int WALL_GAP = WINDOW_HEIGHT - WINDOW_HEIGHT / 3; // Distance between sets
 
 const double SPEED = 1.5; // Define the speed of the walls and enemies
 
+
+class SpeedPowerUp {
+public:
+    double x, y; // position of the speed up
+    int radius; // radius of the speedup
+
+    SpeedPowerUp(double x, double y, int radius) : x(x), y(y), radius(radius) {}
+
+    void draw() {
+        glColor3ub(0, 255, 0); // color set to green
+        glBegin(GL_POLYGON);
+        for (int i = 0; i < 360; i++) {
+            double angle = i * 3.14159 / 180;
+            double fx = x + cos(angle) * radius;
+            double fy = y + sin(angle) * radius;
+            glVertex2d(fx, fy);
+        }
+        glEnd();
+        glColor3ub(0, 0, 0);
+        glRasterPos2i(x - 20, y + 5);
+        YsGlDrawFontBitmap8x12("speed!");
+    }
+};
+
+
 // Class representing a bullet in the game
 // Each bullet has a position (x, y), a radius, and an angle
 // The bullet can be drawn and moved
@@ -67,9 +92,19 @@ class Soldier {
 public:
     double x, y; // Position of the soldier
     int size; // Size of the soldier
+    double speedMultiplier = 1.0;
 
     // Constructor for the Soldier class
     Soldier(int x, int y, int size) : x(x), y(y), size(size) {}
+
+    void increaseSpeed() {
+        if (speedMultiplier < 2.0) {
+            speedMultiplier *= 1.1;
+            if (speedMultiplier > 2.0) {
+                speedMultiplier = 2.0;
+            }
+        }
+    }
 
     // Method to draw the soldier on the screen
     void draw() {
@@ -85,7 +120,7 @@ public:
 
     // Method to move the soldier left or right within the window
     void move(int dx, int windowWidth, int leftBoundary, int rightBoundary) {
-        int newX = x + dx * MOVE_STEP; // Calculate the new x coordinate
+        int newX = x + dx * MOVE_STEP * speedMultiplier; // Calculate the new x coordinate
         if ((newX >= leftBoundary && newX <= rightBoundary - size) || // Check if the new x coordinate is within the window
             (x == leftBoundary && dx > 0) || // Check if the soldier is at the left boundary and the movement is to the right
             (x == rightBoundary - size && dx < 0)) { // Check if the soldier is at the right boundary and the movement is to the left
@@ -256,7 +291,19 @@ int main() {
     int lastShotTime = FsSubSecondTimer();
 
     int lastPassedWallId = -1;
+
+    bool powerUpVisible = false;
+    int powerUpTimer = 0;
+    const int POWER_UP_INTERVAL = 10000;
+    SpeedPowerUp speedPowerUp(0, 0, 10);
+
+    int lastFrameTime = FsSubSecondTimer();
     while (FsInkey() != FSKEY_ESC) {
+
+        int currentFrameTime = FsSubSecondTimer();
+        int deltaTime = currentFrameTime - lastFrameTime; // »ñÈ¡Ö¡¼ä¸ô
+        lastFrameTime = currentFrameTime;
+
         glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
         // Draw road
@@ -356,6 +403,30 @@ int main() {
             // If no collision is detected, move to the next soldier
             else {
                 ++it;
+            }
+        }
+
+        if (!powerUpVisible && powerUpTimer >= POWER_UP_INTERVAL) {
+            int randomX = rand() % (windowWidth - 20) + 10;
+            int randomY = rand() % (windowHeight - 20) + 10;
+            speedPowerUp = SpeedPowerUp(randomX, randomY, 10);
+            powerUpVisible = true;
+            powerUpTimer = 0;
+        }
+
+        if (powerUpVisible) {
+            speedPowerUp.draw();
+        }
+
+        if (!powerUpVisible) {
+            powerUpTimer += deltaTime;
+        }
+
+        for (auto& soldier : soldiers) {
+            if (powerUpVisible && abs(soldier.x - speedPowerUp.x) < soldier.size && abs(soldier.y - speedPowerUp.y) < speedPowerUp.radius) {
+                soldier.increaseSpeed();
+                powerUpVisible = false;
+                powerUpTimer = 0;
             }
         }
 
