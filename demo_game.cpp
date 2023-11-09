@@ -73,12 +73,14 @@ public:
 
     // Method to draw the soldier on the screen
     void draw() {
+        glColor3ub(0, 0, 255);
         glBegin(GL_QUADS);
         glVertex2i(x, y);
         glVertex2i(x + size, y);
         glVertex2i(x + size, y + size);
         glVertex2i(x, y + size);
         glEnd();
+        glColor3ub(0, 0, 0);
     }
 
     // Method to move the soldier left or right within the window
@@ -120,6 +122,7 @@ public:
 
     // Method to draw the enemy on the screen
     void draw() {
+        glColor3ub(255, 0, 0); // Set color to red
         glBegin(GL_POLYGON);
         for (int i = 0; i < 360; i++) {
             double angle = i * 3.14159 / 180;
@@ -128,6 +131,7 @@ public:
             glVertex2d(fx, fy);
         }
         glEnd();
+        glColor3ub(0, 0, 0); // Set color to red
     }
 
     // Method to move the enemy
