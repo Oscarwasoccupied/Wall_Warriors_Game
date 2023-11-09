@@ -67,9 +67,9 @@ parse_cpp.cpp
 pattern.txt
 piano2.wav
 prop5.wav
-ps8-1.cpp
-ps8-2.cpp
-ps9.cpp
+ps[0-9].cpp
+ps[0-9][0-9].cpp
+ps[0-9]-[0-9].cpp
 redarrow.txt
 soundlib_sample_main.cpp
 test.app/
