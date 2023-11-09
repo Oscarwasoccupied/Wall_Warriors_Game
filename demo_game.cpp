@@ -396,19 +396,20 @@ int main() {
         // Check for collisions between soldiers and enemies
         for (auto it = soldiers.begin(); it != soldiers.end(); ) {
             bool isHit = false;
-            for (auto& enemy : enemies) {
-                // Check if the distance between the soldier and the enemy is less than the sum of their sizes (collision detection)
-                if (abs(it->x - enemy.x) < it->size && abs(it->y - enemy.y) < enemy.radius) {
-                    // If a collision is detected, set the hit flag to true and break the loop
+            std::vector<Enemy>::iterator hitEnemy;
+
+            for (auto jt = enemies.begin(); jt != enemies.end(); ++jt) {
+                if (abs(it->x - jt->x) < it->size && abs(it->y - jt->y) < jt->radius) {
                     isHit = true;
+                    hitEnemy = jt;
                     break;
                 }
             }
-            // If a collision is detected, remove the soldier
+
             if (isHit) {
                 it = soldiers.erase(it);
+                enemies.erase(hitEnemy);
             }
-            // If no collision is detected, move to the next soldier
             else {
                 ++it;
             }
@@ -439,11 +440,18 @@ int main() {
             powerUpTimer += deltaTime;
         }
 
+        int speedupflag = false;
         for (auto& soldier : soldiers) {
             if (powerUpVisible && abs(soldier.x - speedPowerUp.x) < soldier.size && abs(soldier.y - speedPowerUp.y) < speedPowerUp.radius) {
-                soldier.increaseSpeed();
+                speedupflag = true;
                 powerUpVisible = false;
                 powerUpTimer = 0;
+            }
+        }
+
+        if (speedupflag == true) {
+            for (auto& soldier : soldiers) {
+                soldier.increaseSpeed();
             }
         }
 
