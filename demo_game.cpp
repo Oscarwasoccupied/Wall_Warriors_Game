@@ -16,8 +16,8 @@
 const int WINDOW_WIDTH = 800;
 const int WINDOW_HEIGHT = 600;
 
-const int SOLDIER_SIZE = 30;
-const int ENEMY_RADIUS = 12;
+const int SOLDIER_SIZE = 20;
+const int ENEMY_RADIUS = 10;
 
 const int MOVE_STEP = 5; // Define the left/right moving step of the soldier
 const int BULLET_RADIUS = 5; // Define the size of the bullet
@@ -29,7 +29,7 @@ const int MAX_ENEMIES = 20; // Maximum number of enemies that can be generated
 const int WALL_GAP = WINDOW_HEIGHT - WINDOW_HEIGHT / 3; // Distance between sets of walls
 
 const double SPEED = 1.5; // Define the speed of the walls and enemies
-
+double globalSpeedMultiplier = 1;
 
 class SpeedPowerUp {
 public:
@@ -101,13 +101,8 @@ public:
     // Constructor for the Soldier class
     Soldier(int x, int y, int size) : x(x), y(y), size(size) {}
 
-    void increaseSpeed() {
-        if (speedMultiplier < 4.0) {
-            speedMultiplier *= 1.25;
-            if (speedMultiplier > 4.0) {
-                speedMultiplier = 4.0;
-            }
-        }
+    void setToGlobalSpeed() {
+        speedMultiplier = globalSpeedMultiplier;
     }
 
     // Method to draw the soldier on the screen
@@ -450,9 +445,14 @@ int main() {
         }
 
         if (speedupflag == true) {
-            for (auto& soldier : soldiers) {
-                soldier.increaseSpeed();
+            globalSpeedMultiplier *= 1.25;
+            if (globalSpeedMultiplier > 4) {
+                globalSpeedMultiplier = 4;
             }
+        }
+
+        for (auto& soldier : soldiers) {
+            soldier.setToGlobalSpeed();
         }
 
         // Check for collisions between bullets and enemies
