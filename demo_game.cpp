@@ -300,7 +300,7 @@ int main() {
     int windowWidth = WINDOW_WIDTH;
     int windowHeight = WINDOW_HEIGHT;
 
-    FsOpenWindow(0, 0, windowWidth, windowHeight, 1);
+    FsOpenWindow(0, 0, windowWidth, windowHeight, 1, "Warrior Game");
 
     std::vector<Soldier> soldiers;
     soldiers.push_back(Soldier(windowWidth / 2, windowHeight - SOLDIER_SIZE, SOLDIER_SIZE));
