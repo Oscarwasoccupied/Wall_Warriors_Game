@@ -277,12 +277,20 @@ void generateSet(std::vector<Wall>& walls, std::vector<Enemy>& enemies, int y, i
 }
 
 int main() {
+    int numSoldiers = 1; // number of soldiers
+    int enemiesDefeated = 0; // eneny defeated
 
     YsSoundPlayer player;
     YsSoundPlayer::SoundData bgmData;
 
-    if (YSOK != bgmData.LoadWav("Instrumental-holiday-music.wav")) {
+    if (YSOK != bgmData.LoadWav("source/bgm.wav")) {
         printf("Failed to read background music\n");
+        return 1;
+    }
+
+    YsSoundPlayer::SoundData hitSound;
+    if (YSOK != hitSound.LoadWav("source/hit.wav")) {
+        printf("Failed to read hit sound\n");
         return 1;
     }
 
@@ -480,6 +488,9 @@ int main() {
                     // If a collision is detected, set the hit flag to true and remove the enemy
                     isHit = true;
                     jt = enemies.erase(jt);
+
+                    player.PlayOneShot(hitSound);
+                    enemiesDefeated++;
                 }
                 else {
                     // If no collision is detected, move to the next enemy
@@ -617,6 +628,20 @@ int main() {
                 ++it;
             }
         }
+
+        numSoldiers = soldiers.size();
+        glColor3ub(255, 0, 255);
+        glRasterPos2i(10, 20);
+        char soldierStr[256];
+        sprintf(soldierStr, "Soldier: %d", numSoldiers);
+        YsGlDrawFontBitmap8x12(soldierStr);
+
+        glRasterPos2i(10, 40);
+        char enemyStr[256];
+        sprintf(enemyStr, "Enemy defeated: %d", enemiesDefeated);
+        YsGlDrawFontBitmap8x12(enemyStr);
+        glColor3ub(0, 0, 0);
+
 
         FsSwapBuffers();
         FsSleep(25);
