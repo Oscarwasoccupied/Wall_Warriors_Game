@@ -483,12 +483,15 @@ int main() {
             powerUpTimer = 0;
         }
 
-        if (!bulletSpeedPowerUpVisible && rand() % 1000 < 5) {
-            int randomX = rand() % (windowWidth - 20) + 10;
-            int randomY = -20;
+        if (!bulletSpeedPowerUpVisible && rand() % 1000 < 5 && !walls.empty()) {
+            int wallIndex = rand() % (walls.size() - 1);
+            int randomY = (walls[wallIndex].y1 + walls[wallIndex + 1].y1) / 2;
+            int randomX = rand() % (700 - 100) + 100;
+
             bulletSpeedPowerUp = BulletSpeedPowerUp(randomX, randomY, 10);
             bulletSpeedPowerUpVisible = true;
         }
+
 
         if (bulletSpeedPowerUpVisible) {
             for (auto& soldier : soldiers) {
