@@ -58,6 +58,33 @@ public:
     }
 };
 
+class BulletSpeedPowerUp {
+public:
+    double x, y; // position of the power-up
+    int radius; // radius of the power-up
+
+    BulletSpeedPowerUp(double x, double y, int radius) : x(x), y(y), radius(radius) {}
+
+    void draw() {
+        glColor3ub(255, 165, 0); // Orange color
+        glBegin(GL_POLYGON);
+        for (int i = 0; i < 360; i++) {
+            double angle = i * 3.14159 / 180;
+            double fx = x + cos(angle) * radius;
+            double fy = y + sin(angle) * radius;
+            glVertex2d(fx, fy);
+        }
+        glEnd();
+        glColor3ub(0, 0, 0);
+        glRasterPos2i(x - 20, y + 5);
+        YsGlDrawFontBitmap8x12("bullet speed!");
+    }
+
+    void move(double speed) {
+        y += speed;
+    }
+};
+
 
 // Class representing a bullet in the game
 // Each bullet has a position (x, y), a radius, and an angle
@@ -279,6 +306,8 @@ void generateSet(std::vector<Wall>& walls, std::vector<Enemy>& enemies, int y, i
 int main() {
     bool gameEnded = false;
 
+    int bulletShootingFrequency = SHOOTING_FREQUENCY;
+
     int numSoldiers = 1; // number of soldiers
     int enemiesDefeated = 0; // eneny defeated
 
@@ -316,9 +345,13 @@ int main() {
     int lastPassedWallId = -1;
 
     bool powerUpVisible = false;
+    bool bulletSpeedPowerUpVisible = false;
+
+
     int powerUpTimer = 0;
     const int POWER_UP_INTERVAL = 10000;
     SpeedPowerUp speedPowerUp(0, 0, 10);
+    BulletSpeedPowerUp bulletSpeedPowerUp(0, 0, 10);
 
     int lastFrameTime = FsSubSecondTimer();
 
@@ -369,26 +402,9 @@ int main() {
             break;  // Exit the game
         }
 
-        // Check if there are no soldiers left
-        //if (soldiers.empty()) {
-            //gameEnded = true;
-            // break; // Exit the game
-        //}
-
-        // Create bullets every SHOOTING_FREQUENCY milliseconds
-        // Shooting Method 1: Shoot bullets straight up only
-        // if (FsSubSecondTimer() - lastShotTime >= SHOOTING_FREQUENCY) {
-        //     int bulletsPerSoldier = 1; // Each soldier shoots one bullet
-        //     for(auto& soldier : soldiers) {
-        //         auto newBullets = soldier.shoot(bulletsPerSoldier);
-        //         bullets.insert(bullets.end(), newBullets.begin(), newBullets.end());
-        //     }
-        //     lastShotTime = FsSubSecondTimer();
-        // }
-
-        // Create bullets every SHOOTING_FREQUENCY milliseconds
+        // Create bullets every bulletShootingFrequency milliseconds
         // Shoting Method 2: Shoot bullets at different angles 
-        if (FsSubSecondTimer() - lastShotTime >= SHOOTING_FREQUENCY) {
+        if (FsSubSecondTimer() - lastShotTime >= bulletShootingFrequency) {
             int bulletsPerSoldier = soldiers.size(); // The number of bullets is equal to the number of soldiers
             auto newBullets = soldiers[0].shoot(bulletsPerSoldier); // Shoot bullets from the first soldier
             bullets.insert(bullets.end(), newBullets.begin(), newBullets.end());
@@ -467,12 +483,39 @@ int main() {
             powerUpTimer = 0;
         }
 
+        if (!bulletSpeedPowerUpVisible && rand() % 1000 < 5) {
+            int randomX = rand() % (windowWidth - 20) + 10;
+            int randomY = -20;
+            bulletSpeedPowerUp = BulletSpeedPowerUp(randomX, randomY, 10);
+            bulletSpeedPowerUpVisible = true;
+        }
+
+        if (bulletSpeedPowerUpVisible) {
+            for (auto& soldier : soldiers) {
+                if (abs(soldier.x - bulletSpeedPowerUp.x) < SOLDIER_SIZE &&
+                    abs(soldier.y - bulletSpeedPowerUp.y) < bulletSpeedPowerUp.radius) {
+                    bulletShootingFrequency = std::max(100, bulletShootingFrequency - 100);
+                    bulletSpeedPowerUpVisible = false;
+                    break;
+                }
+            }
+        }
+
+
         if (powerUpVisible) {
             speedPowerUp.draw();
             speedPowerUp.move(SPEED);
             if (speedPowerUp.y > windowHeight) {
                 powerUpVisible = false;
                 powerUpTimer = 0;
+            }
+        }
+
+        if (bulletSpeedPowerUpVisible) {
+            bulletSpeedPowerUp.draw();
+            bulletSpeedPowerUp.move(SPEED);
+            if (bulletSpeedPowerUp.y > windowHeight) {
+                bulletSpeedPowerUpVisible = false;
             }
         }
 
