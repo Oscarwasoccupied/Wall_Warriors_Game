@@ -1,5 +1,6 @@
 #include "ysglfontdata.h"
 #include "fssimplewindow.h"
+#include "yssimplesound.h"
 #include <vector>
 #include <cmath>
 #include <cstdlib> // for rand and srand
@@ -276,6 +277,15 @@ void generateSet(std::vector<Wall>& walls, std::vector<Enemy>& enemies, int y, i
 }
 
 int main() {
+
+    YsSoundPlayer player;
+    YsSoundPlayer::SoundData bgmData;
+
+    if (YSOK != bgmData.LoadWav("Instrumental-holiday-music.wav")) {
+        printf("Failed to read background music\n");
+        return 1;
+    }
+
     srand(time(0)); // Seed the random number generator
     int windowWidth = WINDOW_WIDTH;
     int windowHeight = WINDOW_HEIGHT;
@@ -301,6 +311,10 @@ int main() {
     SpeedPowerUp speedPowerUp(0, 0, 10);
 
     int lastFrameTime = FsSubSecondTimer();
+
+    // play music
+    player.Start();
+    player.PlayBackground(bgmData);
     while (FsInkey() != FSKEY_ESC) {
 
         int currentFrameTime = FsSubSecondTimer();
@@ -607,6 +621,6 @@ int main() {
         FsSwapBuffers();
         FsSleep(25);
     }
-
+    player.End();
     return 0;
 }
