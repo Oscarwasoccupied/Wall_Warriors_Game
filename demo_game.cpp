@@ -25,8 +25,8 @@ const int BULLET_RADIUS = 5; // Define the size of the bullet
 const int BULLET_SPEED = 10; // Define the speed of the bullet
 const int SHOOTING_FREQUENCY = 900; // Frequency of bullet shooting in milliseconds
 
-int CURRENT_ENEMIES = 5;
-const int MAX_ENEMIES = 20; // Maximum number of enemies that can be generated
+int CURRENT_ENEMIES = 7;
+const int MAX_ENEMIES = 30; // Maximum number of enemies that can be generated
 const int WALL_GAP = WINDOW_HEIGHT - WINDOW_HEIGHT / 3; // Distance between sets of walls
 
 const double SPEED = 1.5; // Define the speed of the walls and enemies
@@ -264,7 +264,7 @@ void generateSet(std::vector<Wall>& walls, std::vector<Enemy>& enemies, int y, i
     walls.push_back(Wall(410, y, 690, y, operation, setId)); // Wall with random operation
 
     // int numEnemies = rand() % MAX_ENEMIES + 1; // Random number of enemies up to MAX_ENEMIES
-    int numEnemies = rand() % CURRENT_ENEMIES + 1; // Random number of enemies up to CURRENT_ENEMIES
+    int numEnemies = rand() % CURRENT_ENEMIES + 3; // Random number of enemies up to CURRENT_ENEMIES
     if (CURRENT_ENEMIES < MAX_ENEMIES) {
         CURRENT_ENEMIES += 2;
     }
