@@ -277,6 +277,8 @@ void generateSet(std::vector<Wall>& walls, std::vector<Enemy>& enemies, int y, i
 }
 
 int main() {
+    bool gameEnded = false;
+
     int numSoldiers = 1; // number of soldiers
     int enemiesDefeated = 0; // eneny defeated
 
@@ -325,6 +327,26 @@ int main() {
     player.PlayBackground(bgmData);
     while (FsInkey() != FSKEY_ESC) {
 
+        if (gameEnded) {
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            glColor3ub(100, 100, 100);
+            glRasterPos2i(170, 300);
+            char endStr[256];
+            sprintf(endStr, "Game Over! Enemies defeated: %d", enemiesDefeated);
+            YsGlDrawFontBitmap16x20(endStr);
+
+            glRasterPos2i(300, 340);
+            YsGlDrawFontBitmap12x16("Press ESC to exit...");
+
+            FsSwapBuffers();
+            FsPollDevice();
+            if (FSKEY_ESC == FsInkey()) {
+                break;
+            }
+            FsSleep(25);
+            continue;
+        }
+
         int currentFrameTime = FsSubSecondTimer();
         int deltaTime = currentFrameTime - lastFrameTime; // ªÒ»°÷°º‰∏Ù
         lastFrameTime = currentFrameTime;
@@ -348,9 +370,10 @@ int main() {
         }
 
         // Check if there are no soldiers left
-        if (soldiers.empty()) {
-            break; // Exit the game
-        }
+        //if (soldiers.empty()) {
+            //gameEnded = true;
+            // break; // Exit the game
+        //}
 
         // Create bullets every SHOOTING_FREQUENCY milliseconds
         // Shooting Method 1: Shoot bullets straight up only
@@ -642,6 +665,10 @@ int main() {
         YsGlDrawFontBitmap8x12(enemyStr);
         glColor3ub(0, 0, 0);
 
+        if (soldiers.empty()) {
+            gameEnded = true;
+            // break; // Exit the game
+        }
 
         FsSwapBuffers();
         FsSleep(25);
