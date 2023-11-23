@@ -212,6 +212,43 @@ public:
     }
 };
 
+// Class representing an obstacle in the game
+// Each enemy has a position (x, y), a side and a speed
+// The enemy can be drawn and moved
+// The enemy moves downwards and towards the soldier if it has passed the wall with the same wallId
+class Obstacle {
+public:
+    double x, y;
+    int halfside;
+    int life;
+    double speed;
+
+    // Constructor for the Enemy class
+    Obstacle(double x, double y, int side, double speed, int life) : x(x), y(y), halfside(side/2), speed(speed), life(life) {}
+
+    // Method to draw the enemy on the screen
+    void draw() {
+        glColor3ub(0, 255, 0); // Set color to green
+        glBegin(GL_QUADS);
+        glVertex2d(x - halfside, y - halfside);
+        glVertex2d(x + halfside, y - halfside);
+        glVertex2d(x + halfside, y + halfside);
+        glVertex2d(x - halfside, y + halfside);
+        glEnd();
+        glColor3ub(255, 0, 255);
+        glRasterPos2i(x - halfside, y);
+        char lifeStr[256];
+        sprintf(lifeStr, "Life: %d", life);
+        YsGlDrawFontBitmap8x12(lifeStr);
+        glColor3ub(0, 0, 0);
+    }
+
+    // Method to move the obstacle
+    void move(double speed) {
+        y += speed; // Always move the obstacle downwards
+    }
+};
+
 // Class representing a wall in the game
 // Each wall has two points (x1, y1) and (x2, y2), an operation, a flag to track if a soldier has passed through the wall, and a wallId
 // The wall can be drawn, moved, and perform an operation on the number of soldiers
@@ -283,7 +320,7 @@ public:
 // This function generates a set of walls and enemies for the game.
 // The function first generates two walls with random operations and adds them to the vector of walls.
 // Then, it generates a random number of enemies (up to MAX_ENEMIES) with random x and y coordinates and adds them to the vector of enemies.
-void generateSet(std::vector<Wall>& walls, std::vector<Enemy>& enemies, int y, int setId) {
+void generateSet(std::vector<Wall>& walls, std::vector<Enemy>& enemies, std::vector<Obstacle>& obstacles, int y, int setId) {
     int operation = rand() % 4; // Random operation (0, 1, 2, or 3)
     walls.push_back(Wall(110, y, 390, y, operation, setId)); // Wall with random operation
 
@@ -301,6 +338,8 @@ void generateSet(std::vector<Wall>& walls, std::vector<Enemy>& enemies, int y, i
         double enemySpeed = 1; // Set the speed of the enemy
         enemies.push_back(Enemy(enemyX, enemyY, ENEMY_RADIUS, SPEED, setId)); // Set the speed of the enemy, Set the wallId field to the setId
     }
+    int randomlife = rand() % 3 + 3;// random from 3 - 5
+    obstacles.push_back(Obstacle(550, y + 40, 40, 1, randomlife));
 }
 
 int main() {
@@ -336,8 +375,9 @@ int main() {
 
     std::vector<Wall> walls;
     std::vector<Enemy> enemies;
+    std::vector<Obstacle> obstacles;
     int setId = 0;
-    generateSet(walls, enemies, 400, setId++);
+    generateSet(walls, enemies, obstacles, 400, setId++);
 
     std::vector<Bullet> bullets;
     int lastShotTime = FsSubSecondTimer();
@@ -434,6 +474,14 @@ int main() {
             }
         }
 
+        // Draw and move walls
+        for (auto& obstacle : obstacles) {
+            if (obstacle.life > 0)
+            {
+                obstacle.draw();
+                obstacle.move(SPEED);
+            }
+        }
 
         // Draw and move enemies
         for (auto& enemy : enemies) {
@@ -448,7 +496,7 @@ int main() {
             wall.draw();
             wall.move(SPEED);
         }
-
+        
         // Check for collisions between soldiers and enemies
         for (auto it = soldiers.begin(); it != soldiers.end(); ) {
             bool isHit = false;
@@ -576,6 +624,40 @@ int main() {
             }
         }
 
+        // Check for collisions between bullets and obstacles
+        for (auto it = bullets.begin(); it != bullets.end(); ) {
+            // Initialize a flag to check if a bullet hits a obstacles
+            bool isHit = false;
+            // Iterate over all obstacles
+            for (auto& obstacle : obstacles) {
+                if (obstacle.life <= 0)
+                {
+                    continue;
+                }
+                // Check if the bullet is within the boundaries of the wall (collision detection)
+                if (it->y <= obstacle.y + obstacle.halfside && it->x >= obstacle.x - obstacle.halfside &&
+                    it->x <= obstacle.x + obstacle.halfside && it->y >= obstacle.y - obstacle.halfside) {
+                    // If a collision is detected, set the hit flag to true and break the loop
+                    isHit = true;
+                    obstacle.life--;
+                    if (obstacle.life == 0)
+                    {
+                        obstacle.life = -1;
+                        bulletShootingFrequency = bulletShootingFrequency - 50;
+                    }
+                    break;
+                }
+            }
+            // If a collision is detected, remove the bullet
+            if (isHit) {
+                it = bullets.erase(it);
+            }
+            // If no collision is detected, move to the next bullet
+            else {
+                ++it;
+            }
+        }
+
         // Check for collisions between bullets and walls
         for (auto it = bullets.begin(); it != bullets.end(); ) {
             // Initialize a flag to check if a bullet hits a wall
@@ -654,7 +736,7 @@ int main() {
 
         // Check if a wall has moved past the end of the window
         if (walls.back().y1 > WALL_GAP) {
-            generateSet(walls, enemies, 0, setId++);
+            generateSet(walls, enemies, obstacles, 0, setId++);
         }
 
         // Remove enemies that have moved past the end of the window
