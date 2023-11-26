@@ -339,7 +339,9 @@ void generateSet(std::vector<Wall>& walls, std::vector<Enemy>& enemies, std::vec
         enemies.push_back(Enemy(enemyX, enemyY, ENEMY_RADIUS, SPEED, setId)); // Set the speed of the enemy, Set the wallId field to the setId
     }
     int randomlife = rand() % 3 + 3;// random from 3 - 5
-    obstacles.push_back(Obstacle(550, y + 40, 40, 1, randomlife));
+    int randomObstacle = rand() % 2;// random number 0 or 1
+    int obstacleX = (randomObstacle == 0) ? 550 : 250; //// Set the x-coordinate based on the random number
+    obstacles.push_back(Obstacle(obstacleX, y + 40, 40, 1, randomlife));
 }
 
 int main() {
