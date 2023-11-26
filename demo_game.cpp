@@ -249,6 +249,40 @@ public:
     }
 };
 
+// Class representing an debuff obstacle in the game
+class debuffObstacle {
+public:
+    double x, y;
+    int halfside;
+    int life;
+    double speed;
+
+    // Constructor for the Enemy class
+    debuffObstacle(double x, double y, int side, double speed, int life) : x(x), y(y), halfside(side / 2), speed(speed), life(life) {}
+
+    // Method to draw the enemy on the screen
+    void draw() {
+        glColor3ub(255, 0, 0); // Set color to green
+        glBegin(GL_QUADS);
+        glVertex2d(x - halfside, y - halfside);
+        glVertex2d(x + halfside, y - halfside);
+        glVertex2d(x + halfside, y + halfside);
+        glVertex2d(x - halfside, y + halfside);
+        glEnd();
+        glColor3ub(0, 0, 255);
+        glRasterPos2i(x - halfside, y);
+        char lifeStr[256];
+        sprintf(lifeStr, "Life: %d", life);
+        YsGlDrawFontBitmap8x12(lifeStr);
+        glColor3ub(0, 0, 0);
+    }
+
+    // Method to move the debuff obstacle
+    void move(double speed) {
+        y += speed; // Always move the debuff obstacle downwards
+    }
+};
+
 // Class representing a wall in the game
 // Each wall has two points (x1, y1) and (x2, y2), an operation, a flag to track if a soldier has passed through the wall, and a wallId
 // The wall can be drawn, moved, and perform an operation on the number of soldiers
@@ -320,7 +354,7 @@ public:
 // This function generates a set of walls and enemies for the game.
 // The function first generates two walls with random operations and adds them to the vector of walls.
 // Then, it generates a random number of enemies (up to MAX_ENEMIES) with random x and y coordinates and adds them to the vector of enemies.
-void generateSet(std::vector<Wall>& walls, std::vector<Enemy>& enemies, std::vector<Obstacle>& obstacles, int y, int setId) {
+void generateSet(std::vector<Wall>& walls, std::vector<Enemy>& enemies, std::vector<Obstacle>& obstacles, std::vector<debuffObstacle>& debuffobstacles, int y, int setId) {
     int operation = rand() % 4; // Random operation (0, 1, 2, or 3)
     walls.push_back(Wall(110, y, 390, y, operation, setId)); // Wall with random operation
 
@@ -341,7 +375,10 @@ void generateSet(std::vector<Wall>& walls, std::vector<Enemy>& enemies, std::vec
     int randomlife = rand() % 3 + 3;// random from 3 - 5
     int randomObstacle = rand() % 2;// random number 0 or 1
     int obstacleX = (randomObstacle == 0) ? 550 : 250; //// Set the x-coordinate based on the random number
+    int debuffobstacleX = 800 - obstacleX;
     obstacles.push_back(Obstacle(obstacleX, y + 40, 40, 1, randomlife));
+    debuffobstacles.push_back(debuffObstacle(debuffobstacleX, y + 40, 40, 1, randomlife-2));//debuffobstacle easier to break
+
 }
 
 int main() {
@@ -378,8 +415,9 @@ int main() {
     std::vector<Wall> walls;
     std::vector<Enemy> enemies;
     std::vector<Obstacle> obstacles;
+    std::vector<debuffObstacle> debuffobstacles;
     int setId = 0;
-    generateSet(walls, enemies, obstacles, 400, setId++);
+    generateSet(walls, enemies, obstacles,debuffobstacles, 400, setId++);
 
     std::vector<Bullet> bullets;
     int lastShotTime = FsSubSecondTimer();
@@ -482,6 +520,13 @@ int main() {
             {
                 obstacle.draw();
                 obstacle.move(SPEED);
+            }
+        }
+        for (auto& debuffobstacle : debuffobstacles) {
+            if (debuffobstacle.life > 0)
+            {
+                debuffobstacle.draw();
+                debuffobstacle.move(SPEED);
             }
         }
 
@@ -645,7 +690,42 @@ int main() {
                     if (obstacle.life == 0)
                     {
                         obstacle.life = -1;
-                        bulletShootingFrequency = bulletShootingFrequency - 50;
+                        bulletShootingFrequency = bulletShootingFrequency - 200;
+                    }
+                    break;
+                }
+            }
+            // If a collision is detected, remove the bullet
+            if (isHit) {
+                it = bullets.erase(it);
+            }
+            // If no collision is detected, move to the next bullet
+            else {
+                ++it;
+            }
+        }
+
+        // Check for collisions between bullets and debuffobstacles
+        for (auto it = bullets.begin(); it != bullets.end(); ) {
+            // Initialize a flag to check if a bullet hits a debuffobstacles
+            bool isHit = false;
+            // Iterate over all debuffobstacles
+            for (auto& debuffobstacle : debuffobstacles) {
+                if (debuffobstacle.life <= 0)
+                {
+                    continue;
+                }
+                // Check if the bullet is within the boundaries of the wall (collision detection)
+                if (it->y <= debuffobstacle.y + debuffobstacle.halfside && it->x >= debuffobstacle.x - debuffobstacle.halfside &&
+                    it->x <= debuffobstacle.x + debuffobstacle.halfside && it->y >= debuffobstacle.y - debuffobstacle.halfside) {
+                    // If a collision is detected, set the hit flag to true and break the loop
+                    isHit = true;
+                    debuffobstacle.life--;
+                    if (debuffobstacle.life == 0)
+                    {
+                        debuffobstacle.life = -1;
+                        bulletShootingFrequency = bulletShootingFrequency + 200;
+
                     }
                     break;
                 }
@@ -738,7 +818,7 @@ int main() {
 
         // Check if a wall has moved past the end of the window
         if (walls.back().y1 > WALL_GAP) {
-            generateSet(walls, enemies, obstacles, 0, setId++);
+            generateSet(walls, enemies, obstacles,debuffobstacles, 0, setId++);
         }
 
         // Remove enemies that have moved past the end of the window
