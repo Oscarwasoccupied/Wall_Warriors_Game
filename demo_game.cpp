@@ -250,6 +250,7 @@ public:
 };
 
 // Class representing an debuff obstacle in the game
+// 
 class debuffObstacle {
 public:
     double x, y;
@@ -262,7 +263,7 @@ public:
 
     // Method to draw the enemy on the screen
     void draw() {
-        glColor3ub(255, 0, 0); // Set color to green
+        glColor3ub(255, 0, 0); // Set color to red
         glBegin(GL_QUADS);
         glVertex2d(x - halfside, y - halfside);
         glVertex2d(x + halfside, y - halfside);
@@ -735,6 +736,31 @@ int main() {
                 it = bullets.erase(it);
             }
             // If no collision is detected, move to the next bullet
+            else {
+                ++it;
+            }
+        }
+
+        // Check for collisions between soldiers and obstacles
+        for (auto it = soldiers.begin(); it != soldiers.end(); ) {
+            bool isHit = false;
+            std::vector<Enemy>::iterator hitObstacle;
+
+            for (auto jt = obstacles.begin(); jt != obstacles.end(); ++jt) {
+                if (abs(it->x - jt->x) < it->size && abs(it->y - jt->y) < jt->halfside) {
+                    isHit = true;
+                    break;
+                }
+            }
+            for (auto jt = debuffobstacles.begin(); jt != debuffobstacles.end(); ++jt) {
+                if (abs(it->x - jt->x) < it->size && abs(it->y - jt->y) < jt->halfside) {
+                    isHit = true;
+                    break;
+                }
+            }
+            if (isHit) {
+                it = soldiers.erase(it);
+            }
             else {
                 ++it;
             }
