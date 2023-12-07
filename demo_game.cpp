@@ -238,7 +238,7 @@ public:
         glColor3ub(255, 0, 255);
         glRasterPos2i(x - halfside, y);
         char lifeStr[256];
-        sprintf(lifeStr, "Life: %d", life);
+        sprintf(lifeStr, "HP: %d", life);
         YsGlDrawFontBitmap8x12(lifeStr);
         glColor3ub(0, 0, 0);
     }
@@ -273,7 +273,7 @@ public:
         glColor3ub(0, 0, 255);
         glRasterPos2i(x - halfside, y);
         char lifeStr[256];
-        sprintf(lifeStr, "Life: %d", life);
+        sprintf(lifeStr, "HP: %d", life);
         YsGlDrawFontBitmap8x12(lifeStr);
         glColor3ub(0, 0, 0);
     }
@@ -373,12 +373,12 @@ void generateSet(std::vector<Wall>& walls, std::vector<Enemy>& enemies, std::vec
         double enemySpeed = 1; // Set the speed of the enemy
         enemies.push_back(Enemy(enemyX, enemyY, ENEMY_RADIUS, SPEED, setId)); // Set the speed of the enemy, Set the wallId field to the setId
     }
-    int randomlife = rand() % 3 + 3;// random from 3 - 5
+    int randomlife = rand() % 9 + 9;// random from 3 - 5
     int randomObstacle = rand() % 2;// random number 0 or 1
     int obstacleX = (randomObstacle == 0) ? 550 : 250; //// Set the x-coordinate based on the random number
     int debuffobstacleX = 800 - obstacleX;
     obstacles.push_back(Obstacle(obstacleX, y + 40, 40, 1, randomlife));
-    debuffobstacles.push_back(debuffObstacle(debuffobstacleX, y + 40, 40, 1, randomlife-2));//debuffobstacle easier to break
+    debuffobstacles.push_back(debuffObstacle(debuffobstacleX, y + 40, 40, 1, randomlife-7));//debuffobstacle easier to break
 
 }
 
