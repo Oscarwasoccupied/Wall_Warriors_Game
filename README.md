@@ -5,7 +5,8 @@ Wall Warriors is a 2D game, reminiscent of those often seen in Instagram adverti
 In this simple 2D shooter, the player controls a group of soldiers advancing on a road, battling enemies and navigating walls with unique properties.
 
 <p align="center">
-  <img src="demo_video.gif" alt="Demo" width="75%" height="75%">
+  <img src="demo_video.gif" alt="Demo" width="75%" height="75%"><br>
+  <sub><b>Note:</b> The game appears slower in this GIF due to the framerate of converting MP4 to GIF. The actual game runs much faster than displayed here.</sub>
 </p>
 
 ### Gameplay 
